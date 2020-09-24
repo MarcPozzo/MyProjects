@@ -31,14 +31,19 @@ def get_movie_seen(movies,df_ref,action_movies_list,ratings):
     return movies_seen
 
 
-def get_user_similarity(movies_seen_by_user,n_movies,n_users):
+def get_user_similarity(movies_seen_by_user):
     
-    movies_seen_by_user.drop(["userId","movieId_ref"],axis=1,inplace=True)
+    movies_seen_by_user_shorter=movies_seen_by_user.drop(["userId","movieId_ref"],axis=1)
+    n_movies_seen=len(movies_seen_by_user_shorter["movie_Action"].unique())
+    n_users=len(movies_seen_by_user_shorter["Id_Action"].unique())
     
-    conversion_Id_movies_seen=pd.DataFrame({"movie_Action":list(movies_seen_by_user["movie_Action"].unique()),"new_movies_Id":range(0,n_movies)})
-    movies_reindex=pd.merge(movies_seen_by_user, conversion_Id_movies_seen)
+    conversion_Id_movies_seen=pd.DataFrame({"movie_Action":list(movies_seen_by_user_shorter["movie_Action"].unique()),"new_movies_Id":range(0,n_movies_seen)})
+    movies_reindex=pd.merge(movies_seen_by_user_shorter, conversion_Id_movies_seen)
     
-    mat_movies_rated=np.zeros(( n_users,n_movies))
+    
+
+    print("Bravo, you have already seen ",str(n_movies_seen) + " movies")
+    mat_movies_rated=np.zeros(( n_users,n_movies_seen))
     for line in movies_reindex.itertuples():
         mat_movies_rated[line[1], line[4]]=line[2]
     
@@ -61,11 +66,14 @@ def get_matrice_new(ratings,movies_seen):
     
     movie_no_seen_new_ref=pd.merge(movie_no_seen, conversion_Id_movies_no_seen)
     
+    #ratings_matrice
     matrice_new=np.zeros(( 1168,n_movies))
     for line in movie_no_seen_new_ref.itertuples():
         matrice_new[line[3], line[6]]=line[5]
         
     return matrice_new,movie_no_seen_new_ref
+
+
 
 
 def pred_user(matrice_modele, user_similarity, k, user):    

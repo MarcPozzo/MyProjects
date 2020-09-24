@@ -41,26 +41,31 @@ nb_movies_asked=int(nb_movies_asked)
 
 
 
-
-n_users = ratings.Id_Action.unique().shape[0]
-n_movies = ratings.movie_Action.unique().shape[0]
 ratings_action=ratings["movie_Action"]
 
-action_movies_list=list(ratings_action[ratings["Id_Action"]==user].unique())
-films_vus_par_u = ratings[ratings_action.isin(action_movies_list)]
-movies_seen_by_user = ratings[ratings_action.isin(action_movies_list)]
-#In a first we suppose assume that there is no user to remove but only movies to reindex
-n_users=len(movies_seen_by_user["Id_Action"].unique())
-n_movies=len(movies_seen_by_user["movie_Action"].unique())
 
+#Get movie_seen
+action_movies_list=list(ratings_action[ratings["Id_Action"]==user].unique())
+movies_seen_by_user = ratings[ratings_action.isin(action_movies_list)]
 movies_seen=fn.get_movie_seen(movies,df_ref,action_movies_list,ratings)
-print("Bravo, you have already seen ",str(n_movies) + " movies")
+n_movies_seen=len(movies_seen_by_user["movie_Action"].unique())
+
 print("The list of movies I advice you is below")
 print("this is the list of movies already seen : ",list(movies_seen["title"].unique()))
 
-user_similarity=fn.get_user_similarity(movies_seen_by_user,n_movies,n_users)
 
-matrice_new,movie_no_seen_new_ref=fn.get_matrice_new(ratings,movies_seen)
+#In a first we suppose assume that there is no user to remove but only movies to reindex
+n_users=len(movies_seen_by_user["Id_Action"].unique())
 
-movies_adviced=fn.get_movie_advice(nb_movies_asked,matrice_new,movie_no_seen_new_ref,ratings,df_ref,movies,user_similarity,user)
+
+
+
+user_similarity=fn.get_user_similarity(movies_seen_by_user)
+
+
+#Ce que je voudrais c'est matrice des films no_seen pour notre cas étudié et les cas plus proches 
+#pred_mat_movie_no_seen
+matrice_movie_no_seen,movie_no_seen_new_ref=fn.get_matrice_new(ratings,movies_seen)
+
+movies_adviced=fn.get_movie_advice(nb_movies_asked,matrice_movie_no_seen,movie_no_seen_new_ref,ratings,df_ref,movies,user_similarity,user)
 
