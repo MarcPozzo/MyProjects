@@ -14,6 +14,8 @@ Created on Wed Sep 16 12:42:18 2020
 @author: utilisateur
 """
 
+#changer the next movie you will love si sing ...
+
 #Libraries
 import pandas as pd
 import numpy as np
@@ -40,6 +42,10 @@ user=int(user)
 nb_movies_asked=int(nb_movies_asked)
 
 
+#colonne importatne pour ratings
+#movie_Action
+#id_Cation
+#A priori on peut enlever movieId dans ratings
 
 ratings_action=ratings["movie_Action"]
 
@@ -67,5 +73,5 @@ user_similarity=fn.get_user_similarity(movies_seen_by_user)
 #pred_mat_movie_no_seen
 matrice_movie_no_seen,movie_no_seen_new_ref=fn.get_matrice_new(ratings,movies_seen)
 
-movies_adviced=fn.get_movie_advice(nb_movies_asked,matrice_movie_no_seen,movie_no_seen_new_ref,ratings,df_ref,movies,user_similarity,user)
+movies_adviced=fn.get_movie_advice(nb_movies_asked,matrice_movie_no_seen,movie_no_seen_new_ref,df_ref,movies,user_similarity,user)
 

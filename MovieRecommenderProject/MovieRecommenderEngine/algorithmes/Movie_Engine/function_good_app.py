@@ -76,26 +76,29 @@ def get_matrice_new(ratings,movies_seen):
 
 
 
-def pred_user(matrice_modele, user_similarity, k, user):    
+def pred_user(matrice_modele, user_similarity, user,k=15):    
     pred = np.zeros(matrice_modele.shape[1])
     top_k_users = np.argsort(user_similarity[:,user])[-1:-k-1:-1]  
-    for i in tqdm(range(matrice_modele.shape[1])):
+    #for i in tqdm(range(matrice_modele.shape[1])):
+    for i in range(matrice_modele.shape[1]):
         pred[i]=user_similarity[user,:][top_k_users].dot(matrice_modele[:,i][top_k_users])
         pred[i]/=np.sum(np.abs(user_similarity[user,:][top_k_users]))+0.000001     
     return pred 
 
 
-def get_movie_advice(nb_movies_asked,matrice_new,movie_no_seen_new_ref,ratings,df_ref,movies,user_similarity,user):
-    movies_adviced=np.argsort(pred_user(matrice_new, user_similarity, 15, user))[-1:-1-nb_movies_asked:-1]
-    movies_adviced=list(movie_no_seen_new_ref["movie_Action"][movie_no_seen_new_ref["new_movies_Id"].isin(movies_adviced)].unique())
-    movies_adviced=list(ratings["movieId_ref"][ratings["movie_Action"].isin(movies_adviced)].unique())
-    movies_adviced=list(df_ref["movieId"][df_ref["movieId_ref"].isin(movies_adviced)].unique())
+def get_movie_advice(nb_movies_asked,matrice_movie_no_seen,movie_no_seen_new_ref,df_ref,movies,user_similarity,user):
     
-    movies_adviced=list(movies["title"][movies["movieId"].isin(movies_adviced)].unique())
-    str(movies_adviced[::-1])[1:-1]
+    #prediction
+    global_prediction_arr=np.argsort(pred_user(matrice_movie_no_seen, user_similarity, user))[-1:-1-nb_movies_asked:-1]
+    
+    
+    movies_adviced_movieId_ref=list(movie_no_seen_new_ref["movieId_ref"][movie_no_seen_new_ref["new_movies_Id"].isin(global_prediction_arr)].unique())
+    movies_adviced_movieId=list(df_ref["movieId"][df_ref["movieId_ref"].isin(movies_adviced_movieId_ref)].unique())
+    movies_adviced=list(movies["title"][movies["movieId"].isin(movies_adviced_movieId)].unique())
+    str_adv=str(movies_adviced[::-1])[1:-1]
     #display the bug before the real message
     print("  ")
     print("Here are movies you will love")
-    print(movies_adviced)
+    print(str_adv)
     return movies_adviced
 
