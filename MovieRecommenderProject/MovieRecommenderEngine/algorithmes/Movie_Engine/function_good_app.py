@@ -88,72 +88,13 @@ def pred_user(matrice_modele, user_similarity, user,k=15):
 
 
 def get_movie_advice(movie_no_seen_new_ref,df_ref,movies,global_prediction_arr):
-    
-    #prediction
-    #global_prediction_arr=np.argsort(pred_user(matrice_movie_no_seen, user_similarity, user))[-1:-1-nb_movies_asked:-1]
-    
-    
-    movies_adviced_movieId_ref=list(movie_no_seen_new_ref["movieId_ref"][movie_no_seen_new_ref["new_movies_Id"].isin(global_prediction_arr)].unique())
-    movies_adviced_movieId=list(df_ref["movieId"][df_ref["movieId_ref"].isin(movies_adviced_movieId_ref)].unique())
-    movies_adviced=list(movies["title"][movies["movieId"].isin(movies_adviced_movieId)].unique())
-    str_adv=str(movies_adviced[::-1])[1:-1]
-    #display the bug before the real message
-    print("  ")
-    print("Here are movies you will love")
-    print(str_adv)
-    return movies_adviced
-
-
-"""
-
-
-
-def get_movie_advice(nb_movies_asked,matrice_movie_no_seen,movie_no_seen_new_ref,df_ref,movies,user_similarity,user):
-    
-    #prediction
-    global_prediction_arr=np.argsort(pred_user(matrice_movie_no_seen, user_similarity, user))[-1:-1-nb_movies_asked:-1]
-    
-    
-    movies_adviced_movieId_ref=list(movie_no_seen_new_ref["movieId_ref"][movie_no_seen_new_ref["new_movies_Id"].isin(global_prediction_arr)].unique())
-    movies_adviced_movieId=list(df_ref["movieId"][df_ref["movieId_ref"].isin(movies_adviced_movieId_ref)].unique())
-    movies_adviced=list(movies["title"][movies["movieId"].isin(movies_adviced_movieId)].unique())
-    str_adv=str(movies_adviced[::-1])[1:-1]
-    #display the bug before the real message
-    print("  ")
-    print("Here are movies you will love")
-    print(str_adv)
-    return movies_adviced
-"""
-
-
-"""
-def pred_user(matrice_modele, user_similarity, user,nb_movies_asked,k=15):    
-    pred = np.zeros(matrice_modele.shape[1])
-    top_k_users = np.argsort(user_similarity[:,user])[-1:-k-1:-1]  
-    #for i in tqdm(range(matrice_modele.shape[1])):
-    for i in range(matrice_modele.shape[1]):
-        pred[i]=user_similarity[user,:][top_k_users].dot(matrice_modele[:,i][top_k_users])
-        pred[i]/=np.sum(np.abs(user_similarity[user,:][top_k_users]))+0.000001  
         
-    #select n index of movies
-    global_prediction_arr=np.argsort(pred_user(matrice_modele, pred, user))[-1:-1-nb_movies_asked:-1]
-    
-    return global_prediction_arr
-
-
-def get_movie_advice(nb_movies_asked,matrice_movie_no_seen,movie_no_seen_new_ref,df_ref,movies,user_similarity,user):
-    
-    #prediction
-    
-    
-    
     movies_adviced_movieId_ref=list(movie_no_seen_new_ref["movieId_ref"][movie_no_seen_new_ref["new_movies_Id"].isin(global_prediction_arr)].unique())
     movies_adviced_movieId=list(df_ref["movieId"][df_ref["movieId_ref"].isin(movies_adviced_movieId_ref)].unique())
     movies_adviced=list(movies["title"][movies["movieId"].isin(movies_adviced_movieId)].unique())
     str_adv=str(movies_adviced[::-1])[1:-1]
-    #display the bug before the real message
-    print("  ")
     print("Here are movies you will love")
     print(str_adv)
     return movies_adviced
-"""
+
+

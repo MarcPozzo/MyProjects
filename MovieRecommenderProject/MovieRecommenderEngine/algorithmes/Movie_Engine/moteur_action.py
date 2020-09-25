@@ -46,7 +46,11 @@ movies_seen_by_user = ratings[ratings["movie_Action"].isin(action_movies_list)]
 movies_seen=fn.get_movie_seen(movies,df_ref,action_movies_list,ratings)
 matrice_movie_no_seen,movie_no_seen_new_ref=fn.get_matrice_new(ratings,movies_seen)
 print("The list of movies I advice you is below")
-print("this is the list of movies already seen : ",list(movies_seen["title"].unique()))
+print("the number of movies you have already seen is : ",len (list(movies_seen["title"].unique())))
+Display=input("If you want a reminder of movies you have already seen type : Yes ")
+
+if Display=="Yes":
+    print("this is the list of movies already seen : ",list(movies_seen["title"].unique()))
 
 
 #Get movies adviced
