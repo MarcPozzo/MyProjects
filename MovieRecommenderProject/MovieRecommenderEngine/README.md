@@ -31,7 +31,7 @@ Télécharger les 2 datasets :
 
 # Architecture du projet :
 
-dataset
+../../dataset
 - ml-20m
 	- genome-scores.csv
 	- genome-tags.csv
@@ -50,11 +50,12 @@ dataset
 - title.principals.tsv
 - title.ratings.tsv
 MovieRecommenderSystem (git-repo)
-- README
-- algorithmes
-- analyses_data
-- new_dataset
-- tri_data
+-deep_learning
+	- README
+	- algorithmes
+	- analyses_data
+	- new_dataset
+	- tri_data
 
 Dossier algorithmes
 
@@ -72,9 +73,7 @@ regroupe les différents algorithmes de data-science étudiés ici
 - regression_moy est un fichier pourri
 - regression_note est un ancien fichier, voir regression_all
 
-- deep-learning
-	- simple.ipynb est un 1er essai de deep-learning avec seulement 2 Dense Layers. 
-	- CNN pour l'instant pas développé
+
 
 - recommender system
 	- creation_matrices_similarites permet de créer des matrices modèles train et test sur les notes des utilisateurs. Crée également le fichier movie_similarity, utile pour le filtrage collaboratif.
