@@ -47,7 +47,7 @@ Avant de commencer :
 
 dataset
 - ml-20m
-	_ genome-scores.csv
+	- genome-scores.csv
 --- --- genome-tags.csv
 --- --- links.csv
 --- --- ratings.csv
