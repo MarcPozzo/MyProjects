@@ -3,16 +3,16 @@
 
 L'objectif est de proposer pour un utilisateur donné un pannel de films conseillés.
 
-Différents modèles ont été entraîné et évalué à partir de deux base de données décrivant les caractéristiques utilisateurs et des films et donnant la note attribuée à chaque film par ces utilisateurs.
+Différents modèles ont été entraînés et évalués à partir de deux bases de données décrivant les caractéristiques utilisateurs et des films et donnant la note attribuée à chaque film par ces utilisateurs.
 
 # Pour faire un test immediat
 Un modèle de moteur de recommandation  réduit aux films d'actions est opérationnel. Pour le tester voici comment faire :
 - Télecharger le répertoire : MovieRecommenderProject
 - Ouvrir un terminal et faire un change directory (commande cd), jusqu'à l'intérieur de ce répertoire
 - Taper dans le terminal MovieRecommenderEngine/algorithmes/Movie_Engine/
-- Taper python3 python3 moteur_action.py
+- Taper python3 moteur_action.py
 
-Un message vous demandra de vous identifier par un nombre et de prendre ainsi fictivement la place d'un réelutilisateur dont les notations ont été enregistrées dans le passé dans les bases de données.
+Un message vous demandra de vous identifier par un nombre et de prendre ainsi fictivement la place d'un réel utilisateur dont les notations ont été enregistrées dans le passé dans les bases de données.
 On vous demandera combien vous souhaiterez qu'on vous conseille de films. Il faudra taper un nombre supérieur ou égal à 1.
 On vous demandera ensuite si vous voulez un rappel des films que vous avez déjà consulter, si c'est cela vous intéresse taper Yes.
 Enfin les films conseillés s'afficheront.
@@ -40,18 +40,16 @@ Avant de commencer :
 
 - S'assurer de la bonne architecture du dossier dataset, à l'exterieur du git-repo.
 - Faire tourner le script MovieRecommenderSystem/tri_data/infos_users pour créer les dataframes qui s'enregistrent dans dataset/data_regression (on en a besoin pour les scripts de regression et de deep-learning).
-- Faire tourner le script MovieRecommenderSystem/algorithmes/recommender_system/creation_matrices_similarites jusqu'à l'enregistrement de la matrice movie_similarity.csv (ensuite ordi plante normalement). On en a besoin pour algorithmes/alternating_least_square
+- Faire tourner le script MovieRecommenderSystem/algorithmes/recommender_system/creation_matrices_similarites jusqu'à l'enregistrement de la matrice movie_similarity.csv 
 
-Ensuite pas d'ordre
 
 # Architecture du projet :
 
 dataset
---- ml-20m
---- --- genome-scores.csv
+- ml-20m
+	_ genome-scores.csv
 --- --- genome-tags.csv
 --- --- links.csv
---- --- movies.csv
 --- --- ratings.csv
 --- --- tags.csv
 --- data_regression
