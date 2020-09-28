@@ -24,20 +24,6 @@ Télécharger les 2 datasets :
 - IMDB qui recense 500K films et leurs caractéristiques (année, durée, genre, réal, acteurs...) à télécharger ici : https://www.imdb.com/interfaces/
 - MovieLens qui recense 27K films et 138K utilisateurs ayant chacun notés certains de ces films à télécharger ici : https://grouplens.org/datasets/movielens/
 
-Il faut ensuite fusionner les 2 databases pour travailler sur 27K films uniquement. On a ainsi pour chaque film des notes d'utilisateurs, et leurs caractéristiques. Les prédictions sont réalisées sur les notes des utilisateurs.
-
-Plusieurs modèles sont étudiés :
-- recommender system
-- regression 
-
-A ces modèles de prédiction s'ajoutent des modèles de clustering pour regrouper des utilisateurs et/des movies.
-- clustering K-Means
-- detection de communautes graphes nx
-Les films proposés sont alors issus du recoupement des 2 types de modèles
-
-
-Avant de commencer :
-
 - S'assurer de la bonne architecture du dossier dataset, à l'exterieur du git-repo.
 - Faire tourner le script MovieRecommenderSystem/tri_data/infos_users pour créer les dataframes qui s'enregistrent dans dataset/data_regression (on en a besoin pour les scripts de regression et de deep-learning).
 - Faire tourner le script MovieRecommenderSystem/algorithmes/recommender_system/creation_matrices_similarites jusqu'à l'enregistrement de la matrice movie_similarity.csv 
@@ -48,27 +34,27 @@ Avant de commencer :
 dataset
 - ml-20m
 	- genome-scores.csv
---- --- genome-tags.csv
---- --- links.csv
---- --- ratings.csv
---- --- tags.csv
---- data_regression
---- --- df_movie.csv
---- --- df_note.csv
---- --- df_user.csv
---- name.basics.tsv
---- title.akas.tsv
---- title.basics.tsv
---- title.crew.tsv
---- title.episode.tsv
---- title.principals.tsv
---- title.ratings.tsv
+	- genome-tags.csv
+	- links.csv
+	- ratings.csv
+	- tags.csv
+- data_regression
+	- df_movie.csv
+	- df_note.csv
+	- df_user.csv
+- name.basics.tsv
+- title.akas.tsv
+- title.basics.tsv
+- title.crew.tsv
+- title.episode.tsv
+- title.principals.tsv
+- title.ratings.tsv
 MovieRecommenderSystem (git-repo)
---- README
---- algorithmes
---- analyses_data
---- new_dataset
---- tri_data
+- README
+- algorithmes
+- analyses_data
+- new_dataset
+- tri_data
 
 Dossier algorithmes
 
@@ -77,24 +63,24 @@ regroupe les différents algorithmes de data-science étudiés ici
 - clustering
 
 - théorie des graphes
---- detection_communautes_movies est un fichier utilisant networkX pour tracer des graphes reliant les films entre eux. 2 films sont reliés entre eux si 1 même utilisateur a voté pour les 2. Sont ensuite réalisés des détections de communautés
---- detection_communautes_movies est un fichier reliant les users entre eux via des graphes. 1 arête est créée entre 2 users si ils ont votés pour le même film. Nombre d'arêtes trop élevée, à revoir.
+	- detection_communautes_movies est un fichier utilisant networkX pour tracer des graphes reliant les films entre eux. 2 films sont reliés entre eux si 1 même utilisateur a voté pour les 2. Sont ensuite réalisés des détections de communautés
+	- detection_communautes_movies est un fichier reliant les users entre eux via des graphes. 1 arête est créée entre 2 users si ils ont votés pour le même film. Nombre d'arêtes trop élevée, à revoir.
 
 - regression
---- regression_all fait une régression linéaire sur Scikit-Learn en utilisant les informations des films et les informations des utilisateurs, pour prédire la note qu'un utilisateur va donner à un film
---- regression_keras fait la même chose, mais sur Keras
---- regression_moy est un fichier pourri
---- regression_note est un ancien fichier, voir regression_all
+	- regression_all fait une régression linéaire sur Scikit-Learn en utilisant les informations des films et les informations des utilisateurs, pour prédire la note qu'un utilisateur va donner à un film
+- regression_keras fait la même chose, mais sur Keras
+- regression_moy est un fichier pourri
+- regression_note est un ancien fichier, voir regression_all
 
 - deep-learning
---- simple.ipynb est un 1er essai de deep-learning avec seulement 2 Dense Layers. 
---- CNN pour l'instant pas développé
+	- simple.ipynb est un 1er essai de deep-learning avec seulement 2 Dense Layers. 
+	- CNN pour l'instant pas développé
 
 - recommender system
---- creation_matrices_similarites permet de créer des matrices modèles train et test sur les notes des utilisateurs. Crée également le fichier movie_similarity, utile pour le filtrage collaboratif.
---- alternating_least_square est un modèle de recommender system 
---- filtrage collaboratif est un autre modèle, basé sur les similarités entre movies, et plus loin dans le fichier sur les similarités entre users (avoir d'abord fait tourner le script creation_matrices_similarites.ipynb
---- reduced... sont des copies des scripts cités plus haut, réalisés sur une portion réduite du dataset.
+	- creation_matrices_similarites permet de créer des matrices modèles train et test sur les notes des utilisateurs. Crée également le fichier movie_similarity, utile pour le filtrage collaboratif.
+	- alternating_least_square est un modèle de recommender system 
+	- filtrage collaboratif est un autre modèle, basé sur les similarités entre movies, et plus loin dans le fichier sur les similarités entre users (avoir d'abord fait tourner le script creation_matrices_similarites.ipynb
+	- reduced... sont des copies des scripts cités plus haut, réalisés sur une portion réduite du dataset.
 
 
 Dossier new_dataset
@@ -113,3 +99,16 @@ regroupe les scripts triant les données des 2 datasets, et les regroupant via d
 - infos_users est un script recoupant des informations sur les utilisateurs (nombre de vote pour chaque utilisateur, moyenne de votes, nombre de vote pour chaque genre de film...)
 - tri_IMDB est le script permettant de trier la database IMDB
 - tri_MovieLens est le script permettant de trier la base de donnée MovieLens
+
+Plusieurs modèles sont étudiés :
+- recommender system
+- regression 
+
+A ces modèles de prédiction s'ajoutent des modèles de clustering pour regrouper des utilisateurs et/des movies.
+- clustering K-Means
+- detection de communautes graphes nx
+Les films proposés sont alors issus du recoupement des 2 types de modèles
+
+
+
+
