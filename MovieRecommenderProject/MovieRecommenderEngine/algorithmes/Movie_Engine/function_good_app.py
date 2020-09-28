@@ -43,7 +43,7 @@ def get_user_similarity(movies_seen_by_user):
     
     
 
-    print("Bravo, you have already seen ",str(n_movies_seen) + " movies")
+    
     mat_movies_rated=np.zeros(( n_users,n_movies_seen))
     for line in movies_reindex.itertuples():
         mat_movies_rated[line[1], line[4]]=line[2]
@@ -53,26 +53,25 @@ def get_user_similarity(movies_seen_by_user):
     return user_similarity
 
 #Changer de nom comme get matrice_no_seen
-def get_matrice_new(ratings,movies_seen):
+def get_no_seen_movies(ratings,movies_seen):
     
     
     (rating_action_list,seen_action_list)=(list(ratings["movie_Action"].unique()),list(movies_seen["movie_Action"].unique()))
     movie_no_seen_list=[item for item in rating_action_list if item not in seen_action_list]
     movie_no_seen=pd.DataFrame({"movie_Action" : movie_no_seen_list})
     movie_no_seen=pd.merge(movie_no_seen,ratings)
-    
+
     n_movies=len(movie_no_seen.movie_Action.unique())
-    #Il faut construire un nouveau index des Id_movies
     conversion_Id_movies_no_seen=pd.DataFrame({"movie_Action":list(movie_no_seen["movie_Action"].unique()),"new_movies_Id":range(0,n_movies)})
     
     movie_no_seen_new_ref=pd.merge(movie_no_seen, conversion_Id_movies_no_seen)
     
     #ratings_matrice
-    matrice_new=np.zeros(( 1168,n_movies))
+    matrice_no_seen_movies=np.zeros(( 1168,n_movies))
     for line in movie_no_seen_new_ref.itertuples():
-        matrice_new[line[2], line[5]]=line[4]
+        matrice_no_seen_movies[line[2], line[5]]=line[4]
         
-    return matrice_new,movie_no_seen_new_ref
+    return matrice_no_seen_movies,movie_no_seen_new_ref
 
 
 
@@ -93,7 +92,10 @@ def get_movie_advice(movie_no_seen_new_ref,df_ref,movies,global_prediction_arr):
     movies_adviced_movieId=list(df_ref["movieId"][df_ref["movieId_ref"].isin(movies_adviced_movieId_ref)].unique())
     movies_adviced=list(movies["title"][movies["movieId"].isin(movies_adviced_movieId)].unique())
     str_adv=str(movies_adviced[::-1])[1:-1]
-    print("Here are movies you will love")
+    if len(movies_adviced)>1:
+        print("Here are movies you will love")
+    elif len(movies_adviced)==1:
+         print("You will love this movie")
     print(str_adv)
     return movies_adviced
 
