@@ -9,8 +9,8 @@ Différents modèles ont été entraînés et évalués à partir de deux bases 
 Un modèle de moteur de recommandation  réduit aux films d'actions est opérationnel. Pour le tester voici comment faire :
 - Télecharger le répertoire : MovieRecommenderProject
 - Ouvrir un terminal et faire un change directory (commande cd), jusqu'à l'intérieur de ce répertoire
-- Taper dans le terminal MovieRecommenderEngine/algorithmes/Movie_Engine/
-- Taper python3 moteur_action.py
+- Taper dans le terminal MovieRecommenderEngine/
+- Taper python3 Action_Engine.py
 
 Un message vous demandra de vous identifier par un nombre et de prendre ainsi fictivement la place d'un réel utilisateur dont les notations ont été enregistrées dans le passé dans les bases de données.
 On vous demandera combien vous souhaiterez qu'on vous conseille de films. Il faudra taper un nombre supérieur ou égal à 1.
@@ -49,13 +49,20 @@ Télécharger les 2 datasets :
 - title.episode.tsv
 - title.principals.tsv
 - title.ratings.tsv
+
 MovieRecommenderSystem (git-repo)
--deep_learning
-	- README
-	- algorithmes
-	- analyses_data
-	- new_dataset
-	- tri_data
+
+## Folders
+- algorithmes 
+- analyses_data 
+- new_dataset 
+- tri_data 
+
+##Files
+- README.md
+-Action_Engine.py
+- functions_mini_app.py
+- JB_corr_a_apporter.ipynb 
 
 Dossier algorithmes
 
