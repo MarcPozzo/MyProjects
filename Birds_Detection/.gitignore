@@ -1,0 +1,13 @@
+.*.sw*
+code/positions
+code/maps
+code/photos
+timeLapsePhotos
+bin/output
+bin/Output_images
+bin/test/*.jpg
+log/*
+**/flagEconomy.txt
+**/flagBoucle.txt
+**/signalfile.txt
+Materiels

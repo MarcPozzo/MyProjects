@@ -1,0 +1,21 @@
+### README ### 
+
+
+#Fichiers d'entrainement
+best_batch_size_multi_graph.ipynb : vise à determiner la taille optimale pour le batch_size
+Evaluation_dropout.ipynb : evaluation pour différents modèles de plusieurs métriques 
+LENET_DROPOUT50.ipynb : script qui permet de trouver le modèle drop_out.50
+Lenet_zoom.ipynb entraine et test sur les imagettes entraine l'architecture Lenet pour différent générateur avec un zoom
+tf_mod_1_ess.ipynb fichier d'essai utilisant tenserflow (contrairement aux autres qui utilisent Keras).
+
+
+
+#Modèles Enregistrés
+6c_rob
+200_ep_sans_transfp
+200_ep_sans_transfo_bis
+drop_out.50 (important)
+lenet_6c_0_9358
+lg6.sav
+model.h6
+
