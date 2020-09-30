@@ -1,32 +1,30 @@
 #### README #### 
 
-##Fichier Get_GBR.ipynb##
+The objective is to predict the electricity consumption for more than 1,500 buildings, for different energy uses annotated between 0 and 3 (explained). It refers to the kaggle competition for more details and to download data follow the link below: https://www.kaggle.com/c/ashrae-energy-prediction
 
-Génère les batchs des imagettes en 28,28,4 dont un 4ème canal correspondant à la différence de gris entre l'image étudiée et la précédante.
-La transformation en grise se fait à partir de la couleur HSV. 
-Les batchs sont stockés dans /mnt/VegaSlowDataDisk/c3po_interface_mark/Materiels/4D_Pictures/Alex_db/
+public score: RMSLE=1.07
 
-##Fichier Get_GBR.ipynb##
-Génère les batchs des imagettes en 28,28,4 dont un 4ème canal correspondant à la différence de gris entre l'image étudiée et la précédante.
-La transformation en grise se fait à partir de la base HSV. Ce qui a l'air de mieux marcher.
-Les batchs sont stockés dans /mnt/VegaSlowDataDisk/c3po_interface_mark/Materiels/4D_Pictures/Alex_db/
+Analysis is made with 6 files including -2 files exclusively for train : train.csv (which contains the target) and weather_train.csv -2 files exclusively for test : test.csv, weather_test.csv ; -building_metadata.csv which describe buildings. Buildings are the same in train and test datasets. -sample_submission.csv to make the submission
 
-##Fichier Get_fp_4C.py##
-génère des listes avec les fp pour chaque images tests au format 28,28,4.
-Il ne resteras plus qu'a concaténer et à les transformer sous forme d'array (-1,28,28,4)
+building_metadata.csv describes buildings and containes data below: -site_id -building_id -primary_use -square_feet -year_built -floor_count
 
+weather_train.csv -site_id -timestamp -air_temperature -cloud_coverage -dew_temperature -precip_depth_1_hr -sea_level_pressure -wind_direction -wind_speed
 
-##Fichier HSV_models.ipynb##
-entrainement des modèles imagettes 4D avec la différence ici de HSV
+weather_test.csv -site_id -timestamp -air_temperature -cloud_coverage -dew_temperature -precip_depth_1_hr -sea_level_pressure -wind_direction -wind_speed
 
-##4C_test_unitaire.py##
+train.csv -meter_reading -building_id -meter -timestamp
 
-Test résultat directement sur les images caméras
+test.csv -row_id -building_id -meter -timestamp
 
+These buildings are distributed in different geographic areas (site id)
 
+This study proposes to predict 2 years of consumption time series for 1500 buildings on python from 1 year of training data. I carried out the following main steps
 
-Un file est utilisé pour stocker les batchs fp sous forme de liste
-/mnt/VegaSlowDataDisk/c3po_interface_mark/Materiels/4D_Pictures/FP/Neurone_name/dossier0/
+-Minimization of the allocated memory. -Interpolation of missing data. -Feature Engineering -Forecast of time series with LightGBM with 5 folds cross validation.
+
+The best predictions are for meter type 1 (rmse=0.85) and the worst for meter type 0 (rmse=1.16)
+
+In the next step I should play with hyperparameters of gbm light for training of data for meter 0 type .
 
 
 
