@@ -3,10 +3,10 @@
 
 ## MovieRecommenderProject (start in Februar 2019)
 
-I mad a recommender engine proposing to a users the best movie(s) corresponding to its taste.
+I made a recommender engine proposing to a users the best movie(s) corresponding to its taste.
 You have the possibility the rapidely try it in opening a terminal in MovieRecommenderProject/MovieRecommenderEngine and typing :
 python3 Action_Engine.py
-I you want more details go to the README in MovieRecommenderProject/MovieRecommenderEngine
+If you want more details go to the README in MovieRecommenderProject/MovieRecommenderEngine
 
 
 
