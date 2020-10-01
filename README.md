@@ -12,13 +12,22 @@ If you want more details go to the README in MovieRecommenderProject/MovieRecomm
 
 ## Ashare (start in November 2019)
 
-The goal is to predict the electricity consumption for more than 1,500 buildings, for different energy uses. 
+The goal is to develop  models of metered building energy usage in the following areas:
 It refers to the kaggle competition for more details and to download data follow the link below: 
+- chilled water, electric, 
+- hot water,  
+- steam meters. The data comes from over 1,000 buildings over a three-year timeframe. 
 https://www.kaggle.com/c/ashrae-energy-prediction
+
+
 
 
 ## Birds_Detection
 
 The puropose is to detect a maximum of birds in fields.
-Birds eat seeds in fields and farmers loose a part of their harverst, that is why we want to detect them in order to make them fear.
-Custom Convolutional Neural Network was used such as Lenet or YoloV2.  
+Birds eat seeds in fields and farmers loose a part of their harverst, that is why we want to detect them in order to make them run away.
+Custom Convolutional Neural Networks was used such as Lenet or YoloV2.  
+
+
+If you want more details or to collaborate with me, please feel free to contact me at my email:
+marc.pozzo@gmail.com
