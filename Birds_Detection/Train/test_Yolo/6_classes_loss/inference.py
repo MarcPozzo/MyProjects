@@ -1,12 +1,16 @@
+path_to_proj='/Users/marcpozzo/Documents/Projet_Git/Projet_Git/Birds_Detection/'
+path_Yolo2="Train/test_Yolo/6_classes_loss"
+
+path=path_to_proj+path_Yolo2
 from os import chdir
-chdir("/mnt/BigFast/VegaFastExtension/Rpackages/c3po_all/c3po_interface_mark/test_Yolo/6_classes_loss/")
+chdir(path)
 import tensorflow as tf
 import sys
 import time
 import cv2
 import numpy as np
 import math
-import common
+import common as common 
 import config
 import model
 import pandas as pd
@@ -14,17 +18,11 @@ import matplotlib.pyplot as plt
 
 from sklearn.model_selection import train_test_split
 
-chdir("/mnt/BigFast/VegaFastExtension/Rpackages/c3po_all/c3po_interface_mark/test_Yolo/6_classes_loss/")
-
-#Le problème est qu'on a pris l'indexation sur l'index et nom pas sur name_test
-#Le mieux en réalité c'est d'appliquer le hasard sur liste_name_test 
-#'image_2019-04-22_19-11-23.jpg' ne fonctionne pas bien
-# Un problème avec /mnt/VegaSlowDataDisk/c3po/Images_aquises/DonneesPI/timeLapsePhotos_Pi1_3/image_2019-05-29_15-10-43.jpg
-#Car les images sont trop proches l'une de l'autre
+chdir(path)
 
 
 
-imagettes=pd.read_csv("/mnt/BigFast/VegaFastExtension/Rpackages/c3po_all/c3po/Images_aquises/imagettes.csv")
+imagettes=pd.read_csv(path_to_proj+"/Materiel/"+"imagettes.csv")
 imagettes=common.to_reference_labels (imagettes,"classe")
 index_train,index_test=common.split(imagettes)
 

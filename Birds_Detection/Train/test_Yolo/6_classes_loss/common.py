@@ -1,5 +1,11 @@
+path_to_proj='/Users/marcpozzo/Documents/Projet_Git/Projet_Git/Birds_Detection/'
+path_Yolo2="Train/test_Yolo/6_classes_loss"
+
+path=path_to_proj+path_Yolo2
+
+path=path_to_proj+path_Yolo2
 from os import chdir
-chdir("/mnt/BigFast/VegaFastExtension/Rpackages/c3po_all/c3po_interface_mark/test_Yolo/6_classes_loss/")
+chdir(path)
 import tensorflow as tf
 from tensorflow.keras import layers, models
 import json
@@ -14,7 +20,7 @@ from sklearn.model_selection import train_test_split
 import ast
 import time
 #
-fichierClasses= "/mnt/BigFast/VegaFastExtension/Rpackages/c3po_all/c3po/Images_aquises/Table_Labels_to_Class.csv" # overwritten by --classes myFile
+fichierClasses= path_to_proj+"Materiel/Table_Labels_to_Class.csv" # overwritten by --classes myFile
 frame=pd.read_csv(fichierClasses,index_col=False)
 
 def to_reference_labels (df,class_colum,frame=frame):
@@ -142,7 +148,7 @@ def intersection_over_union(boxA, boxB):
 
 
 
-imagettes=pd.read_csv("/mnt/BigFast/VegaFastExtension/Rpackages/c3po_all/c3po/Images_aquises/imagettes.csv")
+imagettes=pd.read_csv(path_to_proj+"Materiel/"+"imagettes.csv")
 
    
 
@@ -614,7 +620,7 @@ def my_loss(labels, preds,labels2):
     return loss
 
 
-@tf.function
+#@tf.function
 def train_step(images,labels,labels2,optimizer,model,train_loss):
   with tf.GradientTape() as tape:
     predictions=model(images)
