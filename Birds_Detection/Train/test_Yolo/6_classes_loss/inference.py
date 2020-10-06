@@ -39,10 +39,10 @@ Model=model.model(config.nbr_classes, config.nbr_boxes, config.cellule_y, config
 
 checkpoint=tf.train.Checkpoint(model=Model)
 
-chdir("/mnt/BigFast/VegaFastExtension/Rpackages/c3po_all/c3po_interface_mark/test_Yolo/6_classes_loss/")
+
 checkpoint=tf.train.Checkpoint(model=Model)
 #checkpoint.restore(tf.train.latest_checkpoint("/mnt/VegaSlowDataDisk/c3po_interface_mark/test_Yolo/My_data/training/"))
-checkpoint.restore(tf.train.latest_checkpoint("/mnt/BigFast/VegaFastExtension/Rpackages/c3po_all/c3po_interface_mark/Materiels/Models/Yolo_models/training_jeux_difficile"))
+checkpoint.restore(tf.train.latest_checkpoint("../../Materiels/training_jeux_difficile"))
 
 grid=np.meshgrid(np.arange(config.cellule_x, dtype=np.float32), np.arange(config.cellule_y, dtype=np.float32))
 grid=np.expand_dims(np.stack(grid, axis=-1), axis=2)
@@ -117,3 +117,5 @@ def max_by_index(idx, arr):
 """
 
 """
+
+a="/Users/marcpozzo/Documents/Projet_Git/Projet_Git/Birds_Detection/Train/test_Yolo/6_classes_loss"

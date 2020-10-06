@@ -1,18 +1,19 @@
 The puropose is to detect a maximum of birds in fields with a raspberrypi. This raspberrypi is connected to a camera taking a new picture every 12 secondes. 
 Birds eat seeds in fields and farmers loose a part of their harverst, that is why we want to detect them in order to make them fear. 
-Custom Convolutional Neural Network was used such as Lenet or YoloV2.
+Custom Convolutional Neural Network was used such as Lenet, VGG16 or YoloV2.
 
+Below I explain strategies I used. This is not possible  to execute scripts inside because I cannot share pictures. 
 
 
 
 2 methods types of method can be used :
-- 1) Manually extract objects by images differences and then analyse extracted objects with neural network (for exemple VGG16, Lenet, ...).
-- 2) Use specialzed neural network which automaticaly extract objects and analyze them ( for exemple Yolo, RCNN, ...).  
+1) Manually extract objects by images differences and then analyse extracted objects with neural network (for exemple VGG16, Lenet, ...).
+2) Use specialzed neural network which automaticaly extract objects and analyze them ( for exemple Yolo, RCNN, ...).  
 
 1) Manually extraction
 
-For a given image when a birds has just appeared, if you make the substraction with this one and the previous one when there was still no bird, an important difference will appear in the area  of the bird. 
-Several smaller difference can appear in other area of the picture if there are new shadows for exemple. In the below picture the square represent difference with previous image:
+For a given image when a bird has just appeared, if you make the substraction with this image and the previous one (when there was still no bird), an important difference will appear in the area  of the bird. 
+Several smaller difference can appear in other area of the picture if there are for exemple new shadows. In the below picture the square represent difference with previous image:
 ![imageRectanglesTest_light](https://user-images.githubusercontent.com/30336936/95189697-7c992200-07ce-11eb-9201-d5c96e27b020.jpg)
 
 
@@ -26,6 +27,18 @@ Below you can see in green the square predict as birds and in blue the are area 
 Below an image of Birds detected (green squares) by Lenet CNN
 
 ![FO](https://user-images.githubusercontent.com/30336936/94801959-1fc0f480-03e7-11eb-9986-534e52c07f3a.jpg)
+
+
+2) Model with automatic extraction
+
+Now we are using YoloV2. Birds are represented by blue squares and a rabit is represented with green square.
+
+![Yolo_detection](https://user-images.githubusercontent.com/30336936/95216255-2342ea00-07f2-11eb-893b-e65cda60e1b1.png)
+
+We can notice that YoloV2 well trained can detect birds and other animals that a human can barely find ( see below the original picture).
+![byolo](https://user-images.githubusercontent.com/30336936/95218793-f47a4300-07f4-11eb-82ed-b2a380168ef5.jpg)
+
+
 
 
 Model_Results
