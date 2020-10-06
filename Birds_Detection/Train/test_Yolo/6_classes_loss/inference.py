@@ -1,9 +1,9 @@
 path_to_proj='/Users/marcpozzo/Documents/Projet_Git/Projet_Git/Birds_Detection/'
 path_Yolo2="Train/test_Yolo/6_classes_loss"
 
-path=path_to_proj+path_Yolo2
+path_cd=path_to_proj+path_Yolo2
 from os import chdir
-chdir(path)
+chdir(path_cd)
 import tensorflow as tf
 import sys
 import time
@@ -25,6 +25,7 @@ chdir(path)
 imagettes=pd.read_csv(path_to_proj+"/Materiel/"+"imagettes.csv")
 imagettes=common.to_reference_labels (imagettes,"classe")
 index_train,index_test=common.split(imagettes)
+
 
 images, labels, labels2=common.read_imagettes(imagettes[imagettes["filename"].isin(index_train)])
 

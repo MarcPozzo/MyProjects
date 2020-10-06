@@ -1,11 +1,11 @@
 path_to_proj='/Users/marcpozzo/Documents/Projet_Git/Projet_Git/Birds_Detection/'
 path_Yolo2="Train/test_Yolo/6_classes_loss"
 
-path=path_to_proj+path_Yolo2
+path_cd=path_to_proj+path_Yolo2
 
-path=path_to_proj+path_Yolo2
+
 from os import chdir
-chdir(path)
+chdir(path_cd)
 import tensorflow as tf
 from tensorflow.keras import layers, models
 import json
@@ -218,9 +218,11 @@ def prepare_labels_marc(name_test,imagettes):
     #    print("taille table",len(One_image))
     
     #path="/mnt/VegaSlowDataDisk/c3po/Images_aquises/DonneesPI/timeLapsePhotos_Pi1_0/"
-    path_base="/mnt/BigFast/VegaFastExtension/Rpackages/c3po_all/c3po/Images_aquises"
+    #path_base="/mnt/BigFast/VegaFastExtension/Rpackages/c3po_all/c3po/Images_aquises"
+    path_base="../../../../.."
     path_folder=One_image["path"].iloc[0][1:]+"/"
     path=path_base+path_folder
+    #path=path_folder
     #big_image_path="/mnt/VegaSlowDataDisk/c3po/Images_aquises/DonneesPI/timeLapsePhotos_Pi1_0/image_2019-04-30_18-55-20.jpg"
     big_image_path=path+name_test
     big_image=cv2.imread(big_image_path)
