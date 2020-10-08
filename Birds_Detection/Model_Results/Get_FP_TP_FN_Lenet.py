@@ -7,10 +7,9 @@ Created on Mon Apr 20 10:14:24 2020
 """
 
 
-from os import chdir
-chdir("/mnt/BigFast/VegaFastExtension/Rpackages/c3po_all/c3po_interface_mark/bin")
+
 import pandas as pd
-import functions as fn
+import functions_Lenet as fn
 import os
 from os.path import basename, join
 import numpy as np
@@ -18,7 +17,7 @@ import time
 from tensorflow.keras.models import load_model
 
 
-neurone_feature="/mnt/BigFast/VegaFastExtension/Rpackages/c3po_all/c3po/Chaine_de_traitement/Train_imagettes_annotées/type_oiseau/pre_trained_models/zoom_models/drop_out.50"
+neurone_feature="../Materiel/drop_out.50"
 CNNmodel  = load_model(neurone_feature,compile=False)
 
 path_folder="/mnt/VegaSlowDataDisk/c3po/Images_aquises/DonneesPI/"
