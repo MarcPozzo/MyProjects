@@ -31,8 +31,8 @@ The puropose is to detect a maximum of birds in fields.
 Birds eat seeds in fields and farmers loose a part of their harverst, that is why we want to detect them in order to make them run away.
 Custom Convolutional Neural Networks was used such as Lenet or YoloV2.  
 
-The picture is an overview of the project 
-![imageRectanglesTest_light](https://user-images.githubusercontent.com/30336936/95189697-7c992200-07ce-11eb-9201-d5c96e27b020.jpg)
+The picture below is an overview of the project where birds detect are represented with green squares.
+![FO](https://user-images.githubusercontent.com/30336936/94801959-1fc0f480-03e7-11eb-9986-534e52c07f3a.jpg)
 
 If you want more details about this project go to the README in Birds_Detection
 
