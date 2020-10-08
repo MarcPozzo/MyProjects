@@ -1,49 +1,32 @@
+#This script is the support when it comes to test Lenet or VGG16
+#The script is divided in several sections noted with ##:Predictions, Filters functions, Evaluate predictions, 
+#Assign a class to an image, Adjust extracted imagette, Add 4th chanel
 
 import ast
 import cv2
 import pandas as pd
 import numpy as np
 from numpy import load
-import imutils
 from imutils import grab_contours
 from skimage.measure import compare_ssim
 import math
 from keras.applications import VGG16
 import joblib
 
+
+#Load models
+Mat_path="../Materiels/"
+Model1 = joblib.load(Mat_path+"model.cpickle")
+filtre_RL = joblib.load(Mat_path+"RL_annotation_model")
+coef_filtre=pd.read_csv(Mat_path+"coefs_filtre_RQ.csv")
 model = VGG16(weights="imagenet", include_top=False)
 
-Model1 = joblib.load("/mnt/BigFast/VegaFastExtension/Rpackages/c3po_all/c3po_interface_mark/Materiels/output/model.cpickle")
-filtre_RL = joblib.load("/mnt/BigFast/VegaFastExtension/Rpackages/c3po_all/c3po_interface_mark/Materiels/output/RL_annotation_model")
-coef_filtre=pd.read_csv("/mnt/BigFast/VegaFastExtension/Rpackages/c3po_all/c3po_interface_mark/Materiels/pictures/image_demonstration/testingInputs/coefs_filtre_RQ.csv")
+######################################################################################################################################################
 
-print("la version est",imutils.__version__ )
-
-Mat_path="../Materiel/"
-data_path="../../../"
+##Prediction
 
 
-
-def to_reference_labels (df,class_colum,frame):
-
-    #flatten list in Labels_File
-    cat=[]
-    for i in range(len(frame["categories"]) ):
-        cat.append( frame["categories"][i] )
-
-    liste = [ast.literal_eval(item) for item in cat]
-
-    # set nouvelle_classe to be the "unified" class name
-    for j in range(len(frame["categories"])):
-        #classesToReplace = frame["categories"][j].split(",")[0][2:-1]
-        className = frame["categories"][j].split(",")[0][2:-1]
-        #df["nouvelle_classe"]=df["classe"].replace(classesToReplace,className)
-        df[class_colum]=df[class_colum].replace(liste[j],className)
-
-    return df
-
-
-
+#Prediction with Lenet with 3 or 4chanels
 def base_4C_poly(name_test,name_ref,folder,CNNmodel,maxAnalDL,seuil=210,
                  diff_mod="HSV",method="light",
                  chanels=3,numb_classes=6,mask=False,coverage_threshold=0.99,
@@ -123,96 +106,106 @@ def base_4C_poly(name_test,name_ref,folder,CNNmodel,maxAnalDL,seuil=210,
 
 
 
-def dictionnaire_conversion_mclasses(numb_classes):
-    dic_labels_to_num={}
-    dic_num_to_labels={}
+
+
+
+
+#Prediction with VGG16 (transfert learning and regression logistic 3 chanels)
+def base_VGG16(name_test,name_ref,folder,
+                                 method="ssim",numb_classes=2,mask=True,coverage_threshold=0.99,contrast=-5,blockSize=53,blurFact=25,filtre_choice="No_filtre", thresh=0.99, thresh_active=True,index=False,down_thresh=25):
+
     
-    liste_8_classes=["arbre","chevreuil","ciel","corneille","faisan","lapin","pigeon","terre","oiseau"]
-    liste_6_classes=["autre","chevreuil","corneille","faisan","lapin","pigeon","oiseau"]
-    liste_2_classes=["no_animal","animal"]
+
+    dic_labels_to_num= {'no_animal': 0,'animal': 1,'autre': 0,'chevreuil': 1,'corneille': 2,'faisan': 3,'lapin': 4,'pigeon': 5, 'oiseau': 6}
+ 
     
-    if numb_classes==6:
-        liste_classes=liste_6_classes
-    elif numb_classes==8:
-        liste_classes=liste_8_classes
-    elif numb_classes==2:
-        liste_classes=liste_2_classes
+    #Definition des images
+    path_images=folder+"/"
+    path="/mnt/BigFast/VegaFastExtension/Rpackages/c3po_all/c3po/Images_aquises"
+
+    image_ref=path+path_images+name_ref
+    image_test=path+path_images+name_test
+    imageA=cv2.imread(image_ref)
+    imageB=cv2.imread(image_test)
+    #Ouverture des fichiers annot�s  si on voulait gagner du temps on pourrait le sortir de la fonction
+    imagettes=pd.read_csv("/mnt/BigFast/VegaFastExtension/Rpackages/c3po_all/c3po/Images_aquises/imagettes.csv")
+    nom_classe,imagettes_target=open_imagettes_file(imagettes,folder,name_test)
+
+
+    #Set Mask
+    if mask==True:
+        imageA=mask_function_bis(folder,imageA,number_chanels=3)
+        imageB=mask_function_bis(folder,imageB,number_chanels=3)
+        imageB=imageB.astype(np.uint8)
+        imageA=imageA.astype(np.uint8)
+  
         
-    else :
-        print("le dictionnaire pour ce nombre de classe n'est pas renseigné")
-    for i, j in enumerate(liste_classes):
-        dic_labels_to_num[j]=i
-        dic_num_to_labels[i]=j
-
-    
-    return dic_labels_to_num,dic_num_to_labels
-
-
-def open_imagettes_file(imagettes,folder,name_test):
-    
-    #Select only animals categories
-    liste_to_keep=["chevreuil","corneille","faisan","lapin","pigeon","oiseau"]
-    imagettes=to_reference_labels (imagettes,"classe")
-    imagettes=imagettes[imagettes["classe"].isin(liste_to_keep)]    
-    
-    
-    folder_choosen="."+ folder
-    imagettes_folder=imagettes[(imagettes["path"]==folder_choosen) ]
-
-
-    #On selectionne seulement pour la photo sur laquel on veut rep�rer les oiseaux ou autres animaux et on r�arange les colonnes dans le bon ordre
-    imagettes_target=imagettes_folder[imagettes_folder["filename"]==name_test]
-    to_drop=['path', 'filename', 'width', 'height', 'index']
-    imagettes_target=imagettes_target.drop(to_drop,axis=1)
-    col = list(imagettes_target.columns)[-1:] + list(imagettes_target.columns)[:-1]
-    imagettes_target=imagettes_target[col]
-    
-    
-    
-    #On regarde si il y a des imagettes de type diff�rents pas forc�ment utiles surtout si on garde les oiseaux undefined
-    if len(imagettes_target["classe"].unique())>1:
-        print("attention il y a plusieurs esp�ces d'animaux" )
-    #nom_classe=imagettes1["classe"].iloc[0]
-    nom_classe=list(imagettes_target["classe"].unique())
-    
-    return nom_classe,imagettes_target
-
-
-def mask_function_bis(folder,imageB,number_chanels=3):
-    
-    masks_path='/mnt/BigFast/VegaFastExtension/Rpackages/c3po_all/c3po_interface_mark/find_dominant_colors/how_to/masque/'
-    map_masks={'timeLapsePhotos_Pi1_0': "mask_0.npy", 'timeLapsePhotos_Pi1_1': "mask_1.npy","timeLapsePhotos_Pi1_2": "mask_2.npy","timeLapsePhotos_Pi1_3": "mask_3.npy",  "timeLapsePhotos_Pi1_4": "mask_4.npy"}
-    folder_num=folder.split("/")[2]
-    
-
-    print("masque activée")
-    mask_path=masks_path+map_masks[folder_num]
-    mask_image = load(mask_path)
-    if number_chanels==3:
-        ImageMaksed=np.multiply(imageB, mask_image) 
-    elif number_chanels==1:
-        ImageMaksed=np.multiply(imageB, mask_image[:,:,0]) 
-    imageB=ImageMaksed.astype(int)
-    
-    return imageB
-
-def diff_filtre(imageA,imageB,method="HSV"):
-    if method=="HSV":
-        img2 = cv2.cvtColor(imageA, cv2.COLOR_BGR2HSV)
-        img1 = cv2.cvtColor(imageB, cv2.COLOR_BGR2HSV)
-        absDiff2 = cv2.absdiff(img1, img2)
-        diff_Gray = cv2.cvtColor(absDiff2, cv2.COLOR_BGR2GRAY)
-        
-    elif method=="BGR":
-        absDiff2 = cv2.absdiff(imageA, imageB)
-        diff_Gray = cv2.cvtColor(absDiff2, cv2.COLOR_BGR2GRAY)
-        
+    #Organize generated imagettes and apply filters
+    #cnts=filtre_light(imageA,imageB,blockSize=blockSize,contrast=contrast,blurFact=blurFact)
+    #cnts=filtre_khalid(imageA,imageB)
+    cnts=diff_images(imageA,imageB,blurFact = blurFact,method=method)
+    if cnts!=[]:
+        batchImages_stack_reshape,table_non_filtre=batched_cnts(cnts,imageB,224) 
+        generate_square,batchImages_stack_reshape=filtre_line_bis(table_non_filtre,filtre_choice,batchImages_stack_reshape,down_thresh)
+        batchImages_stack_reshape=np.array(batchImages_stack_reshape)
     else:
-        print("erreur de saisie de la m�thode")
+        batchImages_stack_reshape=np.zeros(shape=(0,0))
+        generate_square=0
+ 
+    #Estimations established and classed
+    if  batchImages_stack_reshape.size :
+       
+
+        #start=time.time()
+        #estimates = model.predict(np.array(batchImages_stack_reshape))
+        maxAnalDL=len(generate_square)
+        #max_probas=filtre_RL.predict_proba(np.array(generate_square, dtype = "float64"))[:,0]
+        max_probas=filtre_RL.predict_proba(np.array(generate_square.iloc[:,1:], dtype = "float64"))[:,0]
+        max_probas = np.argsort(-max_probas)
+        #c'est ici le problème à mon avis
+
+        #maxAnalDL=12
+        index_filter=list(max_probas)[:min(len(cnts),maxAnalDL)]
+        generate_square = generate_square.iloc[index_filter,:]
+        batchImages_stack_reshape = [batchImages_stack_reshape[i] for i in index_filter]
+        generate_square=generate_square.loc[index_filter]
+        generate_square=generate_square.reset_index()
         
-    return diff_Gray
+        #batchImages_stack_reshape = [batchImages_stack_reshape[i] for i in [41,28]]
+
+        
+        features = model.predict(np.array(batchImages_stack_reshape), batch_size=4) # why 5 if only 4 proc on the pi...
+        features = features.reshape((features.shape[0], 7 * 7 * 512))
+
+        predictions = Model1.predict(features)
+        estimates = list(predictions)
+        
+        
+        
+        (liste_Diff_animals,dict_anotation_index_to_classe,liste_DIFF_birds_defined,liste_DIFF_birds_undefined,birds_defined_match,liste_DIFF_corbeau,
+         liste_DIFF_faisan,liste_DIFF_pigeon,liste_DIFF_other_animals)=class_imagettes_sans_dboucle(generate_square,coverage_threshold,imagettes_target,dic_labels_to_num) 
+    
+        (liste_Diff_birds,liste_Diff_animals,birds_match,liste_Diff_not_birds,liste_Diff_animals,
+         liste_DIFF_not_matche)=rearrange_dif(liste_DIFF_birds_defined,liste_DIFF_birds_undefined,liste_DIFF_other_animals,birds_defined_match,batchImages_stack_reshape)
+        
+        
+        TP_birds,FP,TP_estimates,FP_estimates= miss_well_class(estimates,liste_Diff_birds,liste_DIFF_not_matche,
+                        liste_DIFF_corbeau,liste_DIFF_faisan,liste_DIFF_pigeon,liste_Diff_animals,thresh_active,thresh,numb_classes=2,focus="animals",index=True)
+        print(TP_birds)
+
+               
+    else:
+        TP_birds,FP,TP_estimates,FP_estimates=[[] for i in range(4)]
+  
+    return imageA,imageB,cnts,batchImages_stack_reshape,generate_square,TP_birds,FP,TP_estimates,FP_estimates
 
 
+
+
+
+######################################################################################################################################################
+##Filters functions
+    
 def diff_images(imageA,imageB,contrast=-5,blockSize=51,blurFact = 25,method="light",seuil=210):
     
     if method=="light":
@@ -257,53 +250,27 @@ def diff_images(imageA,imageB,contrast=-5,blockSize=51,blurFact = 25,method="lig
         
     return cnts
 
-def batched_cnts(cnts,imageB,imageSize= 28,filtre_color=False):
-    
-    #Initialisation de variables et de liste
-    batchImages = []
-    liste_table = []
-    
-    if filtre_color==False:
-        for ic in range(0,len(cnts)):
-            (x, y, w, h) = cv2.boundingRect(cnts[ic])
-            f = pd.Series(dtype= "float64")
-            f.xmin, f.xmax, f.ymin, f.ymax = x, x+w, y, y+h
-            subI, o, d, imageRectangles = GetSquareSubset(imageB,f,verbose=False)
-            subI = RecenterImage(subI,o)
-            subI = cv2.resize(subI,(imageSize,imageSize))
-            batchImages.append(subI)
-            liste_table.append(np.array([ [f.xmin], [f.xmax], [f.ymin], [f.ymax]], ndmin = 2).reshape((1,4)))     
-    
-    
-    if filtre_color==True:
+
+
+
+
+def diff_filtre(imageA,imageB,method="HSV"):
+    if method=="HSV":
+        img2 = cv2.cvtColor(imageA, cv2.COLOR_BGR2HSV)
+        img1 = cv2.cvtColor(imageB, cv2.COLOR_BGR2HSV)
+        absDiff2 = cv2.absdiff(img1, img2)
+        diff_Gray = cv2.cvtColor(absDiff2, cv2.COLOR_BGR2GRAY)
         
-        for ic in range(0,len(cnts)):
-            (x, y, w, h) = cv2.boundingRect(cnts[ic])
-            f = pd.Series(dtype= "float64")
-            f.xmin, f.xmax, f.ymin, f.ymax = x, x+w, y, y+h
-            subI, o, d, imageRectangles = GetSquareSubset(imageB,f,verbose=False)
-            subI = RecenterImage(subI,o)
-            subI = cv2.resize(subI,(imageSize,imageSize))
-            
-            red=np.mean(subI[:,:,0])
-            green=np.mean(subI[:,:,1])
-            blue=np.mean(subI[:,:,2])
-            colors=(red,green,blue)
-            
-            #or !=
-            if np.max(colors)==blue:
-                batchImages.append(subI)
-                liste_table.append(np.array([ [f.xmin], [f.xmax], [f.ymin], [f.ymax]], ndmin = 2).reshape((1,4)))     
-    
-    
-    batchImages_stack = np.vstack(batchImages)
-    batchImages_stack_reshape=batchImages_stack.reshape((-1, imageSize,imageSize,3))
-    table_non_filtre = pd.DataFrame(np.vstack(liste_table))
-    table_non_filtre = table_non_filtre.rename(columns={ 0: 'xmin', 1: 'xmax', 2: 'ymin', 3: 'ymax'})
-    table_non_filtre=table_non_filtre.astype(int)
-    
-    
-    return batchImages_stack_reshape,table_non_filtre 
+    elif method=="BGR":
+        absDiff2 = cv2.absdiff(imageA, imageB)
+        diff_Gray = cv2.cvtColor(absDiff2, cv2.COLOR_BGR2GRAY)
+        
+    else:
+        print("erreur de saisie de la methode")
+        
+    return diff_Gray
+
+
 
 
 #return  only squares enought small to be birds
@@ -336,80 +303,44 @@ def filtre_line_bis(table_non_filtre,filtre_choice,batchImages_stack_reshape,dow
     small_squares.reset_index(inplace=True)
     return small_squares,batchImages_stack_reshape
 
-#Poue avoir un resultat en 3�me dim ou en 1 dim
-def RecenterImage(subI,o):
+
+
+
+
+
+def pre_select_bis(batchImages_stack_reshape,generate_square,cnts,maxAnalDL=12):
     
-    h,l,r=subI.shape #on sait que r=3 (3 channels)
-    
-    # add to the dimension the dimensions of the cuts (due to image borders)
-    h = h + o.ymincut + o.ymaxcut
-    l = l + o.xmincut + o.xmaxcut
-
-    t= np.full((h, l, r), fill_value=int(round(subI.mean())),dtype=np.uint8) # black image the size of the final thing
-
-    t[o.ymincut:(h-o.ymaxcut),o.xmincut:(l-o.xmaxcut)] = subI
-    
-    return t
-
-
-#extract x_mi,x_max,y_min,y_max
-def get_table_coord(table_line):
-    x_min=table_line["xmin"]
-    y_min=table_line["ymin"]
-    x_max=table_line["xmax"]
-    y_max=table_line["ymax"]
-    
-    return x_min,x_max,y_min,y_max
-
-
-def GetSquareSubset(img,h,verbose=True, xml = False):
-    
-   
-    # d�termine le plus grand c�te du carr�
-    d = max(h.ymax-h.ymin,h.xmax-h.xmin)
+    if maxAnalDL>=1:
+        
+     
+        max_probas=filtre_RL.predict_proba(np.array(generate_square.iloc[:,1:], dtype = "float64"))[:,0]
+        max_probas = np.argsort(-max_probas)
+       
+          
+        index_filter=list(max_probas)[:min(len(cnts),maxAnalDL)]
+        generate_square = generate_square.iloc[index_filter,:]
+        batchImages_stack_reshape = [batchImages_stack_reshape[i] for i in index_filter]
+        generate_square=generate_square.loc[index_filter]
+        generate_square=generate_square.reset_index()
+        
+    elif 0<maxAnalDL<1:
       
-    # d�termine le centre du carr�
-    xcent = int(round((h.xmax-h.xmin)/2)) + h.xmin
-    ycent = int(round((h.ymax-h.ymin)/2)) + h.ymin
-    
-    # new corners
-    hd = int(math.ceil(d/2)) # half distance
-    o = pd.Series(dtype='float64')
-    o.xmin = xcent- hd
-    o.xmax = xcent+ hd
-    o.ymin = ycent- hd
-    o.ymax = ycent+ hd
-    """   
-    print(o.xmin,o.xmax)
-    print(o.ymin,o.ymax)
-    """
-    # check we are not further than the image borders
-    # get the min/max accounting for image border + n cutted pixels: o.(x|y)(min|max)cut
-    o.xmin,o.xmincut = accountForBorder(o.xmin,img.shape[1])
-    o.xmax,o.xmaxcut = accountForBorder(o.xmax,img.shape[1])
-    o.ymin,o.ymincut = accountForBorder(o.ymin,img.shape[0])
-    o.ymax,o.ymaxcut = accountForBorder(o.ymax,img.shape[0])
-    """
-    print(o.xmin,o.xmax)
-    print(o.ymin,o.ymax)
-    """
-    if(verbose):
-        # d�ssine le carr�
-        cv2.rectangle(img, (o.xmin,o.ymin), (o.xmax,o.ymax), (255, 0, 0), 2)     
-        #�criture des images
-#        cv2.imwrite("images_carre/"+h.filename[:-4]+".JPG",img1)
-        # add squares/numbers
-    
-    if(xml == True):
-        # couper l'image
-        subI = img[o.ymin:o.ymax,o.xmin:o.xmax]
+        max_probas=filtre_RL.predict_proba(np.array(generate_square.iloc[:,1:], dtype = "float64"))[:,0]
+        index_filter=np.where(max_probas>maxAnalDL)[0].tolist()
+          
+        generate_square = generate_square.iloc[index_filter,:]
+        batchImages_stack_reshape = [batchImages_stack_reshape[i] for i in index_filter]
+        generate_square=generate_square.loc[index_filter]
+        generate_square=generate_square.reset_index()
+        
     else:
-        # couper l'image
-        # subI = imageB[o.ymin:o.ymax,o.xmin:o.xmax]
-        subI = img[o.ymin:o.ymax,o.xmin:o.xmax]
-   
-    
-    return subI, o, d, img
+        (batchImages_stack_reshape,generate_square)=(batchImages_stack_reshape,generate_square)
+        
+    return batchImages_stack_reshape,generate_square
+
+
+######################################################################################################################################################
+##Evaluate predictions
 
 
 def miss_well_class(estimates,liste_Diff_birds,liste_DIFF_not_matche,
@@ -500,21 +431,8 @@ def miss_well_class(estimates,liste_Diff_birds,liste_DIFF_not_matche,
     if index==False:
         return TP,FP,TP_estimates,FP_estimates
     if index==True:
-        return TP,FP,TP_thresh_index,FP_thresh_index   
-    
-  
-# Verifie les bords de l'image pour la d�coupe    
-def accountForBorder(val,maxval):
+        return TP,FP,TP_thresh_index,FP_thresh_index  
 
-    if(val<0):
-        cut = 0-val
-        val = 0
-    elif(val>maxval):
-        cut = val - maxval
-        val = maxval    
-    else:
-        cut = 0
-    return val,cut
 
 
 
@@ -566,68 +484,6 @@ def rearrange_dif(liste_DIFF_birds_defined,liste_DIFF_birds_undefined,liste_DIFF
 
     return liste_Diff_birds,liste_Diff_animals,birds_match,liste_Diff_not_birds,liste_Diff_animals,liste_DIFF_not_matche
 
-
-def get_4C_all_batch(batchImages_stack_reshape,Diff,table_non_filtre):
-    
-      
-
-    #Etape pour rajouter un canal sur chaque imagette
-    #Diff=diff_filtre(imageA,imageB,method=diff_mod)
-    imageSize=28
-    subI_diff_liste=[]
-    for i in range(len(table_non_filtre)):
-        
-        x_min, x_max, y_min, y_max=get_table_coord(table_non_filtre.iloc[i])
-        
-        f = pd.Series(dtype= "float64")
-        f.xmin, f.xmax, f.ymin, f.ymax = x_min, x_max, y_min, y_max
-        
-        subI_diff, o, d, imageRectangles = GetSquareSubset(Diff,f,verbose=False)
-        subi_expand=np.expand_dims(subI_diff,axis=2)
-        subI_recenter = RecenterImage(subi_expand,o)
-        subI_resize = cv2.resize(subI_recenter,(imageSize,imageSize))
-        subI_resize=np.expand_dims(subI_resize,axis=2)
-        subI_diff_liste.append(subI_resize)
-    list_4C=list(map(add_chanel,batchImages_stack_reshape,subI_diff_liste))
-    batchImages_stack_reshape=np.array(list_4C)
-    
-    return batchImages_stack_reshape
-
-def add_chanel(img,array_to_add):
-    b_channel, g_channel, r_channel = cv2.split(img)
-    img_BGRA = cv2.merge((b_channel, g_channel, r_channel, array_to_add))
-    
-    return img_BGRA
-
-def pre_select_bis(batchImages_stack_reshape,generate_square,cnts,maxAnalDL=12):
-    
-    if maxAnalDL>=1:
-        
-     
-        max_probas=filtre_RL.predict_proba(np.array(generate_square.iloc[:,1:], dtype = "float64"))[:,0]
-        max_probas = np.argsort(-max_probas)
-       
-          
-        index_filter=list(max_probas)[:min(len(cnts),maxAnalDL)]
-        generate_square = generate_square.iloc[index_filter,:]
-        batchImages_stack_reshape = [batchImages_stack_reshape[i] for i in index_filter]
-        generate_square=generate_square.loc[index_filter]
-        generate_square=generate_square.reset_index()
-        
-    elif 0<maxAnalDL<1:
-      
-        max_probas=filtre_RL.predict_proba(np.array(generate_square.iloc[:,1:], dtype = "float64"))[:,0]
-        index_filter=np.where(max_probas>maxAnalDL)[0].tolist()
-          
-        generate_square = generate_square.iloc[index_filter,:]
-        batchImages_stack_reshape = [batchImages_stack_reshape[i] for i in index_filter]
-        generate_square=generate_square.loc[index_filter]
-        generate_square=generate_square.reset_index()
-        
-    else:
-        (batchImages_stack_reshape,generate_square)=(batchImages_stack_reshape,generate_square)
-        
-    return batchImages_stack_reshape,generate_square
 
 
 
@@ -723,6 +579,240 @@ def class_imagettes_sans_dboucle(generate_square,coverage_threshold,
     liste_DIFF_corbeau,liste_DIFF_faisan,liste_DIFF_pigeon,liste_DIFF_lapin,liste_DIFF_chevreuil)
 
 
+######################################################################################################################################################
+##Assign a class to an image
+
+
+#Transform labels to new one already known
+def to_reference_labels (df,class_colum,frame):
+
+    #flatten list in Labels_File
+    cat=[]
+    for i in range(len(frame["categories"]) ):
+        cat.append( frame["categories"][i] )
+
+    liste = [ast.literal_eval(item) for item in cat]
+
+    # set nouvelle_classe to be the "unified" class name
+    for j in range(len(frame["categories"])):
+        #classesToReplace = frame["categories"][j].split(",")[0][2:-1]
+        className = frame["categories"][j].split(",")[0][2:-1]
+        #df["nouvelle_classe"]=df["classe"].replace(classesToReplace,className)
+        df[class_colum]=df[class_colum].replace(liste[j],className)
+
+    return df
+
+
+def dictionnaire_conversion_mclasses(numb_classes):
+    dic_labels_to_num={}
+    dic_num_to_labels={}
+    
+    liste_8_classes=["arbre","chevreuil","ciel","corneille","faisan","lapin","pigeon","terre","oiseau"]
+    liste_6_classes=["autre","chevreuil","corneille","faisan","lapin","pigeon","oiseau"]
+    liste_2_classes=["no_animal","animal"]
+    
+    if numb_classes==6:
+        liste_classes=liste_6_classes
+    elif numb_classes==8:
+        liste_classes=liste_8_classes
+    elif numb_classes==2:
+        liste_classes=liste_2_classes
+        
+    else :
+        print("le dictionnaire pour ce nombre de classe n'est pas renseigné")
+    for i, j in enumerate(liste_classes):
+        dic_labels_to_num[j]=i
+        dic_num_to_labels[i]=j
+
+    
+    return dic_labels_to_num,dic_num_to_labels
+
+
+def open_imagettes_file(imagettes,folder,name_test):
+    
+    #Select only animals categories
+    liste_to_keep=["chevreuil","corneille","faisan","lapin","pigeon","oiseau"]
+    imagettes=to_reference_labels (imagettes,"classe")
+    imagettes=imagettes[imagettes["classe"].isin(liste_to_keep)]    
+    
+    
+    folder_choosen="."+ folder
+    imagettes_folder=imagettes[(imagettes["path"]==folder_choosen) ]
+
+
+    #On selectionne seulement pour la photo sur laquel on veut rep�rer les oiseaux ou autres animaux et on r�arange les colonnes dans le bon ordre
+    imagettes_target=imagettes_folder[imagettes_folder["filename"]==name_test]
+    to_drop=['path', 'filename', 'width', 'height', 'index']
+    imagettes_target=imagettes_target.drop(to_drop,axis=1)
+    col = list(imagettes_target.columns)[-1:] + list(imagettes_target.columns)[:-1]
+    imagettes_target=imagettes_target[col]
+    
+    
+    
+    #On regarde si il y a des imagettes de type diff�rents pas forc�ment utiles surtout si on garde les oiseaux undefined
+    if len(imagettes_target["classe"].unique())>1:
+        print("attention il y a plusieurs especes d'animaux" )
+    #nom_classe=imagettes1["classe"].iloc[0]
+    nom_classe=list(imagettes_target["classe"].unique())
+    
+    return nom_classe,imagettes_target
+
+
+
+
+
+def batched_cnts(cnts,imageB,imageSize= 28,filtre_color=False):
+    
+    #Initialisation de variables et de liste
+    batchImages = []
+    liste_table = []
+    
+    if filtre_color==False:
+        for ic in range(0,len(cnts)):
+            (x, y, w, h) = cv2.boundingRect(cnts[ic])
+            f = pd.Series(dtype= "float64")
+            f.xmin, f.xmax, f.ymin, f.ymax = x, x+w, y, y+h
+            subI, o, d, imageRectangles = GetSquareSubset(imageB,f,verbose=False)
+            subI = RecenterImage(subI,o)
+            subI = cv2.resize(subI,(imageSize,imageSize))
+            batchImages.append(subI)
+            liste_table.append(np.array([ [f.xmin], [f.xmax], [f.ymin], [f.ymax]], ndmin = 2).reshape((1,4)))     
+    
+    
+    if filtre_color==True:
+        
+        for ic in range(0,len(cnts)):
+            (x, y, w, h) = cv2.boundingRect(cnts[ic])
+            f = pd.Series(dtype= "float64")
+            f.xmin, f.xmax, f.ymin, f.ymax = x, x+w, y, y+h
+            subI, o, d, imageRectangles = GetSquareSubset(imageB,f,verbose=False)
+            subI = RecenterImage(subI,o)
+            subI = cv2.resize(subI,(imageSize,imageSize))
+            
+            red=np.mean(subI[:,:,0])
+            green=np.mean(subI[:,:,1])
+            blue=np.mean(subI[:,:,2])
+            colors=(red,green,blue)
+            
+            #or !=
+            if np.max(colors)==blue:
+                batchImages.append(subI)
+                liste_table.append(np.array([ [f.xmin], [f.xmax], [f.ymin], [f.ymax]], ndmin = 2).reshape((1,4)))     
+    
+    
+    batchImages_stack = np.vstack(batchImages)
+    batchImages_stack_reshape=batchImages_stack.reshape((-1, imageSize,imageSize,3))
+    table_non_filtre = pd.DataFrame(np.vstack(liste_table))
+    table_non_filtre = table_non_filtre.rename(columns={ 0: 'xmin', 1: 'xmax', 2: 'ymin', 3: 'ymax'})
+    table_non_filtre=table_non_filtre.astype(int)
+    
+    
+    return batchImages_stack_reshape,table_non_filtre 
+
+
+######################################################################################################################################################
+##Adjust extracted imagette
+
+#Poue avoir un resultat en 3�me dim ou en 1 dim
+def RecenterImage(subI,o):
+    
+    h,l,r=subI.shape #on sait que r=3 (3 channels)
+    
+    # add to the dimension the dimensions of the cuts (due to image borders)
+    h = h + o.ymincut + o.ymaxcut
+    l = l + o.xmincut + o.xmaxcut
+
+    t= np.full((h, l, r), fill_value=int(round(subI.mean())),dtype=np.uint8) # black image the size of the final thing
+
+    t[o.ymincut:(h-o.ymaxcut),o.xmincut:(l-o.xmaxcut)] = subI
+    
+    return t
+
+
+
+
+def GetSquareSubset(img,h,verbose=True, xml = False):
+    
+   
+    # d�termine le plus grand c�te du carr�
+    d = max(h.ymax-h.ymin,h.xmax-h.xmin)
+      
+    # d�termine le centre du carr�
+    xcent = int(round((h.xmax-h.xmin)/2)) + h.xmin
+    ycent = int(round((h.ymax-h.ymin)/2)) + h.ymin
+    
+    # new corners
+    hd = int(math.ceil(d/2)) # half distance
+    o = pd.Series(dtype='float64')
+    o.xmin = xcent- hd
+    o.xmax = xcent+ hd
+    o.ymin = ycent- hd
+    o.ymax = ycent+ hd
+    """   
+    print(o.xmin,o.xmax)
+    print(o.ymin,o.ymax)
+    """
+    # check we are not further than the image borders
+    # get the min/max accounting for image border + n cutted pixels: o.(x|y)(min|max)cut
+    o.xmin,o.xmincut = accountForBorder(o.xmin,img.shape[1])
+    o.xmax,o.xmaxcut = accountForBorder(o.xmax,img.shape[1])
+    o.ymin,o.ymincut = accountForBorder(o.ymin,img.shape[0])
+    o.ymax,o.ymaxcut = accountForBorder(o.ymax,img.shape[0])
+    """
+    print(o.xmin,o.xmax)
+    print(o.ymin,o.ymax)
+    """
+    if(verbose):
+        # d�ssine le carr�
+        cv2.rectangle(img, (o.xmin,o.ymin), (o.xmax,o.ymax), (255, 0, 0), 2)     
+        #�criture des images
+#        cv2.imwrite("images_carre/"+h.filename[:-4]+".JPG",img1)
+        # add squares/numbers
+    
+    if(xml == True):
+        # couper l'image
+        subI = img[o.ymin:o.ymax,o.xmin:o.xmax]
+    else:
+        # couper l'image
+        # subI = imageB[o.ymin:o.ymax,o.xmin:o.xmax]
+        subI = img[o.ymin:o.ymax,o.xmin:o.xmax]
+   
+    
+    return subI, o, d, img
+
+
+ 
+    
+  
+# Verifie les bords de l'image pour la d�coupe    
+def accountForBorder(val,maxval):
+
+    if(val<0):
+        cut = 0-val
+        val = 0
+    elif(val>maxval):
+        cut = val - maxval
+        val = maxval    
+    else:
+        cut = 0
+    return val,cut
+
+
+
+
+#extract x_mi,x_max,y_min,y_max
+def get_table_coord(table_line):
+    x_min=table_line["xmin"]
+    y_min=table_line["ymin"]
+    x_max=table_line["xmax"]
+    y_max=table_line["ymax"]
+    
+    return x_min,x_max,y_min,y_max
+
+
+
+
+
 def area_square(x_min,x_max,y_min,y_max):
     
 
@@ -747,91 +837,55 @@ def area_intersection(x_min_gen,x_max_gen,y_min_gen,y_max_gen,  x_min_anote,x_ma
     return area_intersection
 
 
-
-def base_Khalid_bis(name_test,name_ref,folder,
-                                 method="ssim",numb_classes=2,mask=True,coverage_threshold=0.99,contrast=-5,blockSize=53,blurFact=25,filtre_choice="No_filtre", thresh=0.99, thresh_active=True,index=False,down_thresh=25):
-
+def mask_function_bis(folder,imageB,number_chanels=3):
     
-    class_num=2
-    dic_labels_to_num= {'no_animal': 0,'animal': 1,'autre': 0,'chevreuil': 1,'corneille': 2,'faisan': 3,'lapin': 4,'pigeon': 5, 'oiseau': 6}
- 
+    masks_path='/mnt/BigFast/VegaFastExtension/Rpackages/c3po_all/c3po_interface_mark/find_dominant_colors/how_to/masque/'
+    map_masks={'timeLapsePhotos_Pi1_0': "mask_0.npy", 'timeLapsePhotos_Pi1_1': "mask_1.npy","timeLapsePhotos_Pi1_2": "mask_2.npy","timeLapsePhotos_Pi1_3": "mask_3.npy",  "timeLapsePhotos_Pi1_4": "mask_4.npy"}
+    folder_num=folder.split("/")[2]
     
-    #Definition des images
-    path_images=folder+"/"
-    path="/mnt/BigFast/VegaFastExtension/Rpackages/c3po_all/c3po/Images_aquises"
 
-    image_ref=path+path_images+name_ref
-    image_test=path+path_images+name_test
-    imageA=cv2.imread(image_ref)
-    imageB=cv2.imread(image_test)
-    #Ouverture des fichiers annot�s  si on voulait gagner du temps on pourrait le sortir de la fonction
-    imagettes=pd.read_csv("/mnt/BigFast/VegaFastExtension/Rpackages/c3po_all/c3po/Images_aquises/imagettes.csv")
-    nom_classe,imagettes_target=open_imagettes_file(imagettes,folder,name_test)
-
-
-    #Set Mask
-    if mask==True:
-        imageA=mask_function_bis(folder,imageA,number_chanels=3)
-        imageB=mask_function_bis(folder,imageB,number_chanels=3)
-        imageB=imageB.astype(np.uint8)
-        imageA=imageA.astype(np.uint8)
-  
-        
-    #Organize generated imagettes and apply filters
-    #cnts=filtre_light(imageA,imageB,blockSize=blockSize,contrast=contrast,blurFact=blurFact)
-    #cnts=filtre_khalid(imageA,imageB)
-    cnts=diff_images(imageA,imageB,blurFact = blurFact,method=method)
-    if cnts!=[]:
-        batchImages_stack_reshape,table_non_filtre=batched_cnts(cnts,imageB,224) 
-        generate_square,batchImages_stack_reshape=filtre_line_bis(table_non_filtre,filtre_choice,batchImages_stack_reshape,down_thresh)
-        batchImages_stack_reshape=np.array(batchImages_stack_reshape)
-    else:
-        batchImages_stack_reshape=np.zeros(shape=(0,0))
-        generate_square=0
- 
-    #Estimations established and classed
-    if  batchImages_stack_reshape.size :
-       
-
-        #start=time.time()
-        #estimates = model.predict(np.array(batchImages_stack_reshape))
-        maxAnalDL=len(generate_square)
-        #max_probas=filtre_RL.predict_proba(np.array(generate_square, dtype = "float64"))[:,0]
-        max_probas=filtre_RL.predict_proba(np.array(generate_square.iloc[:,1:], dtype = "float64"))[:,0]
-        max_probas = np.argsort(-max_probas)
-        #c'est ici le problème à mon avis
-
-        #maxAnalDL=12
-        index_filter=list(max_probas)[:min(len(cnts),maxAnalDL)]
-        generate_square = generate_square.iloc[index_filter,:]
-        batchImages_stack_reshape = [batchImages_stack_reshape[i] for i in index_filter]
-        generate_square=generate_square.loc[index_filter]
-        generate_square=generate_square.reset_index()
-        
-        #batchImages_stack_reshape = [batchImages_stack_reshape[i] for i in [41,28]]
-
-        
-        features = model.predict(np.array(batchImages_stack_reshape), batch_size=4) # why 5 if only 4 proc on the pi...
-        features = features.reshape((features.shape[0], 7 * 7 * 512))
-
-        predictions = Model1.predict(features)
-        estimates = list(predictions)
-        
-        
-        
-        (liste_Diff_animals,dict_anotation_index_to_classe,liste_DIFF_birds_defined,liste_DIFF_birds_undefined,birds_defined_match,liste_DIFF_corbeau,
-         liste_DIFF_faisan,liste_DIFF_pigeon,liste_DIFF_other_animals)=class_imagettes_sans_dboucle(generate_square,coverage_threshold,imagettes_target,dic_labels_to_num) 
+    print("masque activée")
+    mask_path=masks_path+map_masks[folder_num]
+    mask_image = load(mask_path)
+    if number_chanels==3:
+        ImageMaksed=np.multiply(imageB, mask_image) 
+    elif number_chanels==1:
+        ImageMaksed=np.multiply(imageB, mask_image[:,:,0]) 
+    imageB=ImageMaksed.astype(int)
     
-        (liste_Diff_birds,liste_Diff_animals,birds_match,liste_Diff_not_birds,liste_Diff_animals,
-         liste_DIFF_not_matche)=rearrange_dif(liste_DIFF_birds_defined,liste_DIFF_birds_undefined,liste_DIFF_other_animals,birds_defined_match,batchImages_stack_reshape)
-        
-        
-        TP_birds,FP,TP_estimates,FP_estimates= miss_well_class(estimates,liste_Diff_birds,liste_DIFF_not_matche,
-                        liste_DIFF_corbeau,liste_DIFF_faisan,liste_DIFF_pigeon,liste_Diff_animals,thresh_active,thresh,numb_classes=2,focus="animals",index=True)
-        print(TP_birds)
+    return imageB
 
-               
-    else:
-        TP_birds,FP,TP_estimates,FP_estimates=[[] for i in range(4)]
-  
-    return imageA,imageB,cnts,batchImages_stack_reshape,generate_square,TP_birds,FP,TP_estimates,FP_estimates
+######################################################################################################################################################
+##Add 4th chanel
+    
+def get_4C_all_batch(batchImages_stack_reshape,Diff,table_non_filtre):
+    
+      
+
+    #Etape pour rajouter un canal sur chaque imagette
+    #Diff=diff_filtre(imageA,imageB,method=diff_mod)
+    imageSize=28
+    subI_diff_liste=[]
+    for i in range(len(table_non_filtre)):
+        
+        x_min, x_max, y_min, y_max=get_table_coord(table_non_filtre.iloc[i])
+        
+        f = pd.Series(dtype= "float64")
+        f.xmin, f.xmax, f.ymin, f.ymax = x_min, x_max, y_min, y_max
+        
+        subI_diff, o, d, imageRectangles = GetSquareSubset(Diff,f,verbose=False)
+        subi_expand=np.expand_dims(subI_diff,axis=2)
+        subI_recenter = RecenterImage(subi_expand,o)
+        subI_resize = cv2.resize(subI_recenter,(imageSize,imageSize))
+        subI_resize=np.expand_dims(subI_resize,axis=2)
+        subI_diff_liste.append(subI_resize)
+    list_4C=list(map(add_chanel,batchImages_stack_reshape,subI_diff_liste))
+    batchImages_stack_reshape=np.array(list_4C)
+    
+    return batchImages_stack_reshape
+
+def add_chanel(img,array_to_add):
+    b_channel, g_channel, r_channel = cv2.split(img)
+    img_BGRA = cv2.merge((b_channel, g_channel, r_channel, array_to_add))
+    
+    return img_BGRA
