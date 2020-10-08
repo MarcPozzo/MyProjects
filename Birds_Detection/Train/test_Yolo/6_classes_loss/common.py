@@ -1,3 +1,4 @@
+
 path_to_proj='/Users/marcpozzo/Documents/Projet_Git/Projet_Git/Birds_Detection/'
 path_Yolo2="Train/test_Yolo/6_classes_loss"
 
@@ -7,6 +8,7 @@ path_cd=path_to_proj+path_Yolo2
 from os import chdir
 chdir(path_cd)
 import tensorflow as tf
+print("la version de tensorflow est :",tf.__version__)
 from tensorflow.keras import layers, models
 import json
 import random

@@ -39,10 +39,9 @@ Model=model.model(config.nbr_classes, config.nbr_boxes, config.cellule_y, config
 
 checkpoint=tf.train.Checkpoint(model=Model)
 
+print("the next line shoudl return something like <tensorflow.python.training.checkpointable.util.CheckpointLoadStatus at .....>" )
+checkpoint.restore(tf.train.latest_checkpoint("../../../Materiel/training_jeux_difficile"))
 
-checkpoint=tf.train.Checkpoint(model=Model)
-#checkpoint.restore(tf.train.latest_checkpoint("/mnt/VegaSlowDataDisk/c3po_interface_mark/test_Yolo/My_data/training/"))
-checkpoint.restore(tf.train.latest_checkpoint("../../Materiels/training_jeux_difficile"))
 
 grid=np.meshgrid(np.arange(config.cellule_x, dtype=np.float32), np.arange(config.cellule_y, dtype=np.float32))
 grid=np.expand_dims(np.stack(grid, axis=-1), axis=2)
@@ -108,13 +107,13 @@ for i in range(len(images)):
     quit()
 
 
+
+"""
 def max_by_index(idx, arr):
     return (idx,) + np.unravel_index(np.argmax(arr[idx]), arr.shape[1:])
 
 def max_by_index(idx, arr):
     return np.where(arr[idx] == np.max(arr[idx]))
-
-"""
 
 """
 
