@@ -839,7 +839,7 @@ def area_intersection(x_min_gen,x_max_gen,y_min_gen,y_max_gen,  x_min_anote,x_ma
 
 def mask_function_bis(folder,imageB,number_chanels=3):
     
-    masks_path='/mnt/BigFast/VegaFastExtension/Rpackages/c3po_all/c3po_interface_mark/find_dominant_colors/how_to/masque/'
+    masks_path=Mat_path+'masque/'
     map_masks={'timeLapsePhotos_Pi1_0': "mask_0.npy", 'timeLapsePhotos_Pi1_1': "mask_1.npy","timeLapsePhotos_Pi1_2": "mask_2.npy","timeLapsePhotos_Pi1_3": "mask_3.npy",  "timeLapsePhotos_Pi1_4": "mask_4.npy"}
     folder_num=folder.split("/")[2]
     

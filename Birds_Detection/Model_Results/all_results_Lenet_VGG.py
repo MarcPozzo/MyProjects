@@ -7,7 +7,7 @@ Created on Mon Sep 21 16:18:33 2020
 """
 
 import tensorflow
-print("la version tf est :", tf.__version__)
+
 
 from os import chdir
 chdir("/mnt/BigFast/VegaFastExtension/Rpackages/c3po_all/c3po_interface_mark/bin")

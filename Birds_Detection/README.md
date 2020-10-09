@@ -28,6 +28,22 @@ Below an image of Birds detected (green squares) by Lenet CNN
 
 ![FO](https://user-images.githubusercontent.com/30336936/94801959-1fc0f480-03e7-11eb-9986-534e52c07f3a.jpg)
 
+For our use we only need to detect birds in fields, the rest of the picture is not useful. 
+We can notice that several objects are identified outside of the field. 
+Altought in this case these objects aren't identified as birds, it could be a source of failure and this is not useful.
+That is why we will set a mask to hide the unuseful part.
+Below the image before and after to set the mask. 
+
+
+
+Several objects are identified outside of the field
+
+Before to set the mask
+![pic3_mask](https://user-images.githubusercontent.com/30336936/95606479-ad8d8700-0a5a-11eb-9aaf-8e0574aef498.jpg)
+
+
+After to set the mask
+![pic3_wout_mask](https://user-images.githubusercontent.com/30336936/95606657-ed546e80-0a5a-11eb-82e3-8c83413b10c7.jpg)
 
 2) Model with automatic extraction
 
