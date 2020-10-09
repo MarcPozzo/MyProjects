@@ -2,8 +2,9 @@ The puropose is to detect a maximum of birds in fields with a raspberrypi. This 
 Birds eat seeds in fields and farmers loose a part of their harverst, that is why we want to detect them in order to make them fear. 
 Custom Convolutional Neural Network was used such as Lenet, VGG16 or YoloV2.
 
-Below I explain strategies I used. This is not possible  to execute scripts inside because I cannot share pictures. 
-
+This is not possible  to execute scripts inside because I cannot share pictures. That is why I propose you I explain strategies I used. 
+If you want a quick look of my script, I suggest you to go in demonstration folder where there are the most important scripts. 
+This work is still in progress because I began to transfert it in October, that is why few scrip may be missing or path could be wrong. I will correct it as soon as possible. 
 
 
 2 methods types of method can be used :
