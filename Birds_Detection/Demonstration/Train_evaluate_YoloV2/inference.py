@@ -1,54 +1,43 @@
-#Chemin supprimer ceux inutiles
-#Regarder si on pris les imagettes correctement avec le iloc 
-#Regarder aussi si les images ont de bons résultats
+#In this script we try YoloV2 on 3 images containing birds. 
+#For each of them a couple of image are displayed the first one with the right answer the other one with birds find by Yolo
 
-path_to_proj='/Users/marcpozzo/Documents/Projet_Git/Projet_Git/Birds_Detection/'
-path_Yolo2="Train/test_Yolo/6_classes_loss"
-Mat_path="../../Materiel/"
-
-
-
-
+#Load Libraries
 import tensorflow as tf
-
 import cv2
 import numpy as np
-print("ch1")
 import common as common 
-print("ch2")
 import config
 import model
 import pandas as pd
 
-
-#from sklearn.model_selection import train_test_split
-tf.enable_eager_execution
-tf.compat.v1.enable_eager_execution(
-    config=None, device_policy=None, execution_mode=None
-)
-
-
-
+#Set Parameters
 Mat_path="../../Materiels/"
 neurone="training_jeux_difficile"
 string=Mat_path+neurone
-
-path_to_proj="../../"
-imagettes=pd.read_csv(Mat_path+"imagettes.csv")
 imagettes_to_keep=['image_2019-06-14_15-46-54.jpg', 'image_2019-06-14_15-47-11.jpg','image_2019-06-14_15-47-28.jpg']
+
+
+tf_version=tf.__version__
+if tf_version[0]=="1":
+    tf.compat.v1.enable_eager_execution(
+    config=None, device_policy=None, execution_mode=None)
+elif tf_version[0]=="2":
+    print("Warning your are in tensorflow 2, it the programm doesn't work please try with tensorflow 1")
+    tf.enable_eager_execution
+
+
+
+#Gather images in a dataset object
+imagettes=pd.read_csv(Mat_path+"imagettes.csv")
 imagettes=imagettes[imagettes["filename"].isin(imagettes_to_keep)]
 imagettes=common.to_reference_labels (imagettes,"classe")
-
-
-
 images, labels, labels2=common.read_imagettes(imagettes)
-
 images=np.array(images, dtype=np.float32)/255
 labels=np.array(labels, dtype=np.float32)
-
 dataset=tf.data.Dataset.from_tensor_slices((images, labels)).batch(config.batch_size)
 
 
+#Load the model
 Model=model.model(config.nbr_classes, config.nbr_boxes, config.cellule_y, config.cellule_x)
 print("the next line shoudl return something like <tensorflow.python.training.checkpointable.util.CheckpointLoadStatus at .....>" )
 checkpoint=tf.train.Checkpoint(model=Model)
@@ -56,14 +45,13 @@ checkpoint.restore(tf.train.latest_checkpoint(string))
 
 
 
-
+#Set a grid
 grid=np.meshgrid(np.arange(config.cellule_x, dtype=np.float32), np.arange(config.cellule_y, dtype=np.float32))
 grid=np.expand_dims(np.stack(grid, axis=-1), axis=2)
 grid=np.tile(grid, (1, 1, config.nbr_boxes, 1))
 
-#for i in range(len(images)):
-#for i in range(len(images)):
-for i in range(1):
+
+for i in range(len(images)):
   img=common.prepare_image(images[i], labels[i], False)
   img2=images[i].copy()
   predictions=Model(np.array([images[i]]))
@@ -112,10 +100,10 @@ for i in range(1):
   
   
   
-  cv2.imshow("Inference", images[i])
-  cv2.resizeWindow("Inference", 12, 12)
+  #cv2.imshow("Inference", images[i])
+  #cv2.resizeWindow("Inference", 12, 12)
   cv2.imshow("Bonne reponse", img)
-  cv2.imshow("Non max suppression", img2)
+  cv2.imshow("Inference", img2)
     
   key=cv2.waitKey()&0xFF
   if key==ord('q'):

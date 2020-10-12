@@ -1,16 +1,7 @@
+#This is the script functions support for Train.py, inference.py and custom_loss.py
 
-path_to_proj='/Users/marcpozzo/Documents/Projet_Git/Projet_Git/Birds_Detection/'
-path_Yolo2="Train/test_Yolo/6_classes_loss"
-path_cd=path_to_proj+path_Yolo2
-Mat_path="../../Materiel/"
-
-path_to_proj="../../"
-
-from os import chdir
-#chdir(path_cd)
+#Load Libraries
 import tensorflow as tf
-print("la version de tensorflow est :",tf.__version__)
-#from tensorflow.keras import layers, models
 import random
 import cv2
 import numpy as np
@@ -19,20 +10,16 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 import ast
 import time
-#tf.enable_eager_execution
-#
 
-Mat_path="../../Materiel/"
-fold_to_keep=[       './DonneesPI/timeLapsePhotos_Pi1_4',
-       './DonneesPI/timeLapsePhotos_Pi1_3',
-       './DonneesPI/timeLapsePhotos_Pi1_2',
-       './DonneesPI/timeLapsePhotos_Pi1_1',
-       './DonneesPI/timeLapsePhotos_Pi1_0']
 
-fichierClasses= path_to_proj+"Materiels/Table_Labels_to_Class.csv" # overwritten by --classes myFile
+
+
+
+
+#Set paramaters
+Mat_path="../../Materiels/"
+fichierClasses= Mat_path+"Table_Labels_to_Class.csv" # overwritten by --classes myFile
 frame=pd.read_csv(fichierClasses,index_col=False)
-imagettes=pd.read_csv(path_to_proj+"Materiels/"+"imagettes.csv")
-imagettes=imagettes[imagettes["path"].isin(fold_to_keep)]
 
 
 def to_reference_labels (df,class_colum,frame=frame):
@@ -54,7 +41,7 @@ def to_reference_labels (df,class_colum,frame=frame):
 
     liste = [ast.literal_eval(item) for item in cat]
 
-    print("check point")
+
     # set nouvelle_classe to be the "unified" class name
     for j in range(len(frame["categories"])):
         #classesToReplace = frame["categories"][j].split(",")[0][2:-1]
@@ -62,11 +49,11 @@ def to_reference_labels (df,class_colum,frame=frame):
         #df["nouvelle_classe"]=df["classe"].replace(classesToReplace,className)
         df[class_colum]=df[class_colum].replace(liste[j],className)
         
-    print("check point2")
+
     #Select only categories with enough values
     liste_to_keep=["chevreuil","corneille","faisan","lapin","pigeon"]
     df=df[df["classe"].isin(liste_to_keep)]
-    print("check point3")
+
     return df
 
 def sigmoid(x):
@@ -174,7 +161,7 @@ def read_imagettes(imagettes):
   liste_name_test=list(imagettes["filename"].unique())
 
   for name_test in liste_name_test:
-      image, label, label2=prepare_labels_marc(name_test, imagettes_copy)
+      image, label, label2=prepare_labels_demo(name_test, imagettes_copy)
      
          
       if image is not None:
