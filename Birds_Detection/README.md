@@ -3,6 +3,15 @@ Birds eat seeds in fields and farmers loose a part of their harverst, that is wh
 Custom Convolutional Neural Network was used such as Lenet, VGG16 or YoloV2.
 
 This is not possible  to execute scripts inside because I cannot share pictures. That is why I propose you I explain strategies I used. 
+If you want to have a quick overview of my work and use my algorithme in several pictures please type:
+cd Birds_Detection/Demonstration
+python3 inference.py
+
+Requirement for the demonstration:
+tensorflow=1.13.1
+Keras=2.2.4
+openCV/cv2=3.4.2
+ 
 If you want a quick look of my script, I suggest you to go in demonstration folder where there are the most important scripts. 
 This work is still in progress because I began to transfert it in October, that is why few scrip may be missing or path could be wrong. I will correct it as soon as possible. 
 
