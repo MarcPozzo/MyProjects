@@ -1,46 +1,66 @@
 path_to_proj='/Users/marcpozzo/Documents/Projet_Git/Projet_Git/Birds_Detection/'
 path_Yolo2="Train/test_Yolo/6_classes_loss"
+Mat_path="../../Materiel/"
 
-path_cd=path_to_proj+path_Yolo2
-from os import chdir
-chdir(path_cd)
+
+
+
 import tensorflow as tf
-import sys
-import time
+
 import cv2
 import numpy as np
-import math
+print("ch1")
 import common as common 
+print("ch2")
 import config
 import model
 import pandas as pd
-import matplotlib.pyplot as plt
-
-from sklearn.model_selection import train_test_split
-
-chdir(path_cd)
 
 
+#from sklearn.model_selection import train_test_split
+tf.enable_eager_execution
+tf.compat.v1.enable_eager_execution(
+    config=None, device_policy=None, execution_mode=None
+)
 
-imagettes=pd.read_csv(path_to_proj+"/Materiel/"+"imagettes.csv")
+
+
+fold_to_keep=[       './DonneesPI/timeLapsePhotos_Pi1_4',
+       './DonneesPI/timeLapsePhotos_Pi1_3',
+       './DonneesPI/timeLapsePhotos_Pi1_2',
+       './DonneesPI/timeLapsePhotos_Pi1_1',
+       './DonneesPI/timeLapsePhotos_Pi1_0']
+
+
+
+
+Mat_path="../../Materiels/"
+neurone="training_jeux_difficile"
+string=Mat_path+neurone
+
+path_to_proj="../../"
+imagettes=pd.read_csv(Mat_path+"imagettes.csv")
+imagettes=imagettes[imagettes["path"].isin(fold_to_keep)]
 imagettes=common.to_reference_labels (imagettes,"classe")
 index_train,index_test=common.split(imagettes)
 
 
-images, labels, labels2=common.read_imagettes(imagettes[imagettes["filename"].isin(index_train)])
-
+#Choose  index_test or index_train
+index=index_train
+im_file=imagettes[imagettes["filename"].isin(index)].iloc[0:2]
+images, labels, labels2=common.read_imagettes(im_file)
 images=np.array(images, dtype=np.float32)/255
 labels=np.array(labels, dtype=np.float32)
 
-
+dataset=tf.data.Dataset.from_tensor_slices((images, labels)).batch(config.batch_size)
 
 
 Model=model.model(config.nbr_classes, config.nbr_boxes, config.cellule_y, config.cellule_x)
-
-checkpoint=tf.train.Checkpoint(model=Model)
-
 print("the next line shoudl return something like <tensorflow.python.training.checkpointable.util.CheckpointLoadStatus at .....>" )
-checkpoint.restore(tf.train.latest_checkpoint("../../../Materiel/training_jeux_difficile"))
+checkpoint=tf.train.Checkpoint(model=Model)
+checkpoint.restore(tf.train.latest_checkpoint(string))
+
+
 
 
 grid=np.meshgrid(np.arange(config.cellule_x, dtype=np.float32), np.arange(config.cellule_y, dtype=np.float32))
@@ -107,14 +127,3 @@ for i in range(len(images)):
     quit()
 
 
-
-"""
-def max_by_index(idx, arr):
-    return (idx,) + np.unravel_index(np.argmax(arr[idx]), arr.shape[1:])
-
-def max_by_index(idx, arr):
-    return np.where(arr[idx] == np.max(arr[idx]))
-
-"""
-
-a="/Users/marcpozzo/Documents/Projet_Git/Projet_Git/Birds_Detection/Train/test_Yolo/6_classes_loss"

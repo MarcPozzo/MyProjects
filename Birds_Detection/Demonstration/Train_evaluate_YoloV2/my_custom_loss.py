@@ -10,6 +10,11 @@ import model
 import pandas as pd
 from sklearn.model_selection import train_test_split
 import common
+tf.enable_eager_execution
+tf.compat.v1.enable_eager_execution(
+    config=None, device_policy=None, execution_mode=None
+)
+
 
 
 fold_to_keep=[       './DonneesPI/timeLapsePhotos_Pi1_4',
@@ -45,6 +50,8 @@ dataset=tf.data.Dataset.from_tensor_slices((images, labels)).batch(config.batch_
 Model=model.model(config.nbr_classes, config.nbr_boxes, config.cellule_y, config.cellule_x)
 checkpoint=tf.train.Checkpoint(model=Model)
 checkpoint.restore(tf.train.latest_checkpoint(string))
+
+
 
 
 

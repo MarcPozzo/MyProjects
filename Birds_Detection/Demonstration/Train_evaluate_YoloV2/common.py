@@ -10,18 +10,16 @@ from os import chdir
 #chdir(path_cd)
 import tensorflow as tf
 print("la version de tensorflow est :",tf.__version__)
-from tensorflow.keras import layers, models
-import json
+#from tensorflow.keras import layers, models
 import random
 import cv2
 import numpy as np
-import math
 import config
 import pandas as pd
-from pandas.core.common import flatten
 from sklearn.model_selection import train_test_split
 import ast
 import time
+#tf.enable_eager_execution
 #
 
 
