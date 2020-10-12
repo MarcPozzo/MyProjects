@@ -1,3 +1,7 @@
+#Chemin supprimer ceux inutiles
+#Regarder si on pris les imagettes correctement avec le iloc 
+#Regarder aussi si les images ont de bons résultats
+
 path_to_proj='/Users/marcpozzo/Documents/Projet_Git/Projet_Git/Birds_Detection/'
 path_Yolo2="Train/test_Yolo/6_classes_loss"
 Mat_path="../../Materiel/"
@@ -25,30 +29,20 @@ tf.compat.v1.enable_eager_execution(
 
 
 
-fold_to_keep=[       './DonneesPI/timeLapsePhotos_Pi1_4',
-       './DonneesPI/timeLapsePhotos_Pi1_3',
-       './DonneesPI/timeLapsePhotos_Pi1_2',
-       './DonneesPI/timeLapsePhotos_Pi1_1',
-       './DonneesPI/timeLapsePhotos_Pi1_0']
-
-
-
-
 Mat_path="../../Materiels/"
 neurone="training_jeux_difficile"
 string=Mat_path+neurone
 
 path_to_proj="../../"
 imagettes=pd.read_csv(Mat_path+"imagettes.csv")
-imagettes=imagettes[imagettes["path"].isin(fold_to_keep)]
+imagettes_to_keep=['image_2019-06-14_15-46-54.jpg', 'image_2019-06-14_15-47-11.jpg','image_2019-06-14_15-47-28.jpg']
+imagettes=imagettes[imagettes["filename"].isin(imagettes_to_keep)]
 imagettes=common.to_reference_labels (imagettes,"classe")
-index_train,index_test=common.split(imagettes)
 
 
-#Choose  index_test or index_train
-index=index_train
-im_file=imagettes[imagettes["filename"].isin(index)].iloc[0:2]
-images, labels, labels2=common.read_imagettes(im_file)
+
+images, labels, labels2=common.read_imagettes(imagettes)
+
 images=np.array(images, dtype=np.float32)/255
 labels=np.array(labels, dtype=np.float32)
 
@@ -68,7 +62,8 @@ grid=np.expand_dims(np.stack(grid, axis=-1), axis=2)
 grid=np.tile(grid, (1, 1, config.nbr_boxes, 1))
 
 #for i in range(len(images)):
-for i in range(len(images)):
+#for i in range(len(images)):
+for i in range(1):
   img=common.prepare_image(images[i], labels[i], False)
   img2=images[i].copy()
   predictions=Model(np.array([images[i]]))

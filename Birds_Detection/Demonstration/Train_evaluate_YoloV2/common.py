@@ -2,7 +2,7 @@
 path_to_proj='/Users/marcpozzo/Documents/Projet_Git/Projet_Git/Birds_Detection/'
 path_Yolo2="Train/test_Yolo/6_classes_loss"
 path_cd=path_to_proj+path_Yolo2
-
+Mat_path="../../Materiel/"
 
 path_to_proj="../../"
 
@@ -22,7 +22,7 @@ import time
 #tf.enable_eager_execution
 #
 
-
+Mat_path="../../Materiel/"
 fold_to_keep=[       './DonneesPI/timeLapsePhotos_Pi1_4',
        './DonneesPI/timeLapsePhotos_Pi1_3',
        './DonneesPI/timeLapsePhotos_Pi1_2',
@@ -190,35 +190,99 @@ def read_imagettes(imagettes):
 
 
  
-#  
-"""
-def read_imagettes(imagettes):
-  images=[]
-  labels=[]
-  labels2=[]
-  
-  imagettes_copy=imagettes.copy()
-  print("tail tab_init",len( imagettes_copy[ imagettes_copy["filename"]=='image_2019-04-22_19-11-23.jpg']))
-  liste_name_test=list(imagettes["filename"].unique())
 
-  for name_test in liste_name_test:
-      image, label, label2=prepare_labels_marc(name_test, imagettes_copy)
-      if name_test=='image_2019-04-22_19-11-23.jpg':
-          print("tail tab",len( imagettes_copy[ imagettes_copy["filename"]==name_test]))
-       
-          print("objet",label2[1])
-         
-      if image is not None:
-          images.append(image)
-          labels.append(label)
-          labels2.append(label2)
- 
+
+def prepare_labels_demo(name_test,imagettes):
+
+
+
+    imagettes_copy=imagettes.copy()
+    One_image=imagettes_copy[imagettes_copy["filename"]==name_test]
+    big_image_path=Mat_path+"pic_ex/"+name_test
+    big_image=cv2.imread(big_image_path)
+      
+    coeff=1
+    image_r=cv2.resize(big_image, (int(round(coeff*config.largeur)), int(round(coeff*config.hauteur))))
+    #image_r=gamma(image_r, random.uniform(0.7, 1.3), np.random.randint(60)-30)
+    #image_r=bruit(image_r)
+
+    shift_x=0
+    shift_y=0
     
-  images=np.array(images)
-  labels=np.array(labels)
-  labels2=np.array(labels2)
-  return images, labels, labels2    
-"""    
+    ratio_x=coeff*config.largeur/big_image.shape[1]
+    ratio_y=coeff*config.hauteur/big_image.shape[0]
+
+
+    label =np.zeros((config.cellule_y, config.cellule_x, config.nbr_boxes, 5+config.nbr_classes), dtype=np.float32)
+    label2=np.zeros((config.max_objet, 7), dtype=np.float32)
+    
+
+    nbr_objet=0
+    for i in range(len(One_image)):
+        One_imagette=One_image.iloc[i]
+        classe=One_imagette["classe"]
+        id_class=config.dict2.index(classe)
+        (x_min,x_max,y_min,y_max)=One_imagette[["xmin","xmax","ymin","ymax"]]
+        x_min=int((x_min*ratio_x))
+        x_max=int((x_max*ratio_x))
+        y_min=int((y_min*ratio_y))
+        y_max=int((y_max*ratio_y))
+
+            
+        x_min=(x_min-shift_x)/config.r_x
+        y_min=(y_min-shift_y)/config.r_y
+        x_max=(x_max-shift_x)/config.r_x
+        y_max=(y_max-shift_y)/config.r_y
+
+        area=(x_max-x_min)*(y_max-y_min)
+        label2[nbr_objet]=[x_min, y_min, x_max, y_max, area, 1, id_class]
+        #if name_test=='image_2019-04-22_19-11-23.jpg':
+        #    print("prem el lab2",label2[1])
+        #    print(i)
+        #nbr_objet+=1
+        x_centre=x_min+(x_max-x_min)/2
+        y_centre=y_min+(y_max-y_min)/2
+        x_cell=int((x_centre))
+        y_cell=int((y_centre))
+        
+             
+        largeur=x_max-x_min
+        hauteur=y_max-y_min
+        #x_centre=int(x_min+(x_max-x_min)/2)
+        #y_centre=int(y_min+(y_max-y_min)/2)
+        #x_cell=int(x_centre)
+        #y_cell=int(y_centre)
+
+        a_x_min=x_centre-config.anchors[:, 0]/2
+        a_y_min=y_centre-config.anchors[:, 1]/2
+        a_x_max=x_centre+config.anchors[:, 0]/2
+        a_y_max=y_centre+config.anchors[:, 1]/2
+
+        id_a=0
+        best_iou=0
+        for i in range(len(config.anchors)):
+          iou=intersection_over_union([x_min, y_min, x_max, y_max], [a_x_min[i], a_y_min[i], a_x_max[i], a_y_max[i]])
+          if iou>best_iou:
+            best_iou=iou
+            id_a=i
+
+        label[y_cell, x_cell, id_a, 0]=x_centre
+        label[y_cell, x_cell, id_a, 1]=y_centre
+        label[y_cell, x_cell, id_a, 2]=largeur
+        label[y_cell, x_cell, id_a, 3]=hauteur
+        label[y_cell, x_cell, id_a, 4]=1.
+        label[y_cell, x_cell, id_a, 5+id_class]=1.
+        
+        nbr_objet=nbr_objet+1
+        if nbr_objet==config.max_objet:
+          print("Nbr objet max atteind !!!!!")
+          break
+    #if name_test=='image_2019-04-22_19-11-23.jpg':
+    #    print("c etait la bonne",label2[1])
+    return image_r,label,label2
+
+
+
 
 def prepare_labels_marc(name_test,imagettes):
 
@@ -353,104 +417,6 @@ def split(imagettes):
     fn_train,fn_test=train_test_split(dataframe["filename"],stratify=dataframe[['path', 'cat_maj']],random_state=42,test_size=0.2)
     
     return fn_train,fn_test
-
-
-"""
-
-
-def prepare_labels_marc(name_test,imagettes):
-
-
-
- 
-    One_image=imagettes[imagettes["filename"]==name_test]
-    #path="/mnt/VegaSlowDataDisk/c3po/Images_aquises/DonneesPI/timeLapsePhotos_Pi1_0/"
-    path_base="/mnt/VegaSlowDataDisk/c3po/Images_aquises"
-    path_folder=One_image["path"].iloc[0][1:]+"/"
-    path=path_base+path_folder
-    #big_image_path="/mnt/VegaSlowDataDisk/c3po/Images_aquises/DonneesPI/timeLapsePhotos_Pi1_0/image_2019-04-30_18-55-20.jpg"
-    big_image_path=path+name_test
-    big_image=cv2.imread(big_image_path)
-      
-    coeff=1
-    image_r=cv2.resize(big_image, (int(round(coeff*config.largeur)), int(round(coeff*config.hauteur))))
-
-    shift_x=0
-    shift_y=0
-    
-    ratio_x=coeff*config.largeur/big_image.shape[1]
-    ratio_y=coeff*config.hauteur/big_image.shape[0]
-
-
-    label =np.zeros((config.cellule_y, config.cellule_x, config.nbr_boxes, 5+config.nbr_classes), dtype=np.float32)
-    #Le 7 correspond à 7 objets et non 7 classes, la classe est le dernier de ces objets
-    label2=np.zeros((config.max_objet, 7), dtype=np.float32)
-    
-    nbr_objet=0
-    for i in range(len(One_image)):
-        One_imagette=One_image.iloc[i]
-        classe=One_imagette["classe"]
-        id_class=config.dict2.index(classe)
-        (x_min,x_max,y_min,y_max)=One_imagette[["xmin","xmax","ymin","ymax"]]
-        x_min=int(round(x_min*ratio_x))
-        x_max=int(round(x_max*ratio_x))
-        y_min=int(round(y_min*ratio_y))
-        y_max=int(round(y_max*ratio_y))
-
-            
-        x_min=(x_min-shift_x)/config.r_x
-        y_min=(y_min-shift_y)/config.r_y
-        x_max=(x_max-shift_x)/config.r_x
-        y_max=(y_max-shift_y)/config.r_y
-
-        area=(x_max-x_min)*(y_max-y_min)
-        label2[nbr_objet]=[x_min, y_min, x_max, y_max, area, 1, id_class]
-        
-        
-        x_centre=x_min+(x_max-x_min)/2
-        y_centre=y_min+(y_max-y_min)/2
-        x_cell=int((x_centre))
-        y_cell=int((y_centre))
-        
-        if x_cell==16:
-            x_cell=15
-        if y_cell==12:
-            y_cell=11            
-        largeur=x_max-x_min
-        hauteur=y_max-y_min
-        #x_centre=int(x_min+(x_max-x_min)/2)
-        #y_centre=int(y_min+(y_max-y_min)/2)
-        #x_cell=int(x_centre)
-        #y_cell=int(y_centre)
-
-        a_x_min=x_centre-config.anchors[:, 0]/2
-        a_y_min=y_centre-config.anchors[:, 1]/2
-        a_x_max=x_centre+config.anchors[:, 0]/2
-        a_y_max=y_centre+config.anchors[:, 1]/2
-
-        id_a=0
-        best_iou=0
-        for i in range(len(config.anchors)):
-          iou=intersection_over_union([x_min, y_min, x_max, y_max], [a_x_min[i], a_y_min[i], a_x_max[i], a_y_max[i]])
-          if iou>best_iou:
-            best_iou=iou
-            id_a=i
-
-        label[y_cell, x_cell, id_a, 0]=x_centre
-        label[y_cell, x_cell, id_a, 1]=y_centre
-        label[y_cell, x_cell, id_a, 2]=largeur
-        label[y_cell, x_cell, id_a, 3]=hauteur
-        label[y_cell, x_cell, id_a, 4]=1.
-        label[y_cell, x_cell, id_a, 5+id_class]=1.
-        
-        nbr_objet=nbr_objet+1
-        if nbr_objet==config.max_objet:
-          print("Nbr objet max atteind !!!!!")
-          break
-
-    return image_r,label,label2
-"""
-
 
 
 def calcul_map(Model, dataset,labels2, beta=1., seuil=0.1):
