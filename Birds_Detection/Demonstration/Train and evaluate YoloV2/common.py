@@ -1,12 +1,13 @@
 
 path_to_proj='/Users/marcpozzo/Documents/Projet_Git/Projet_Git/Birds_Detection/'
 path_Yolo2="Train/test_Yolo/6_classes_loss"
-
 path_cd=path_to_proj+path_Yolo2
 
 
+path_to_proj="../../"
+
 from os import chdir
-chdir(path_cd)
+#chdir(path_cd)
 import tensorflow as tf
 print("la version de tensorflow est :",tf.__version__)
 from tensorflow.keras import layers, models
@@ -22,8 +23,19 @@ from sklearn.model_selection import train_test_split
 import ast
 import time
 #
-fichierClasses= path_to_proj+"Materiel/Table_Labels_to_Class.csv" # overwritten by --classes myFile
+
+
+fold_to_keep=[       './DonneesPI/timeLapsePhotos_Pi1_4',
+       './DonneesPI/timeLapsePhotos_Pi1_3',
+       './DonneesPI/timeLapsePhotos_Pi1_2',
+       './DonneesPI/timeLapsePhotos_Pi1_1',
+       './DonneesPI/timeLapsePhotos_Pi1_0']
+
+fichierClasses= path_to_proj+"Materiels/Table_Labels_to_Class.csv" # overwritten by --classes myFile
 frame=pd.read_csv(fichierClasses,index_col=False)
+imagettes=pd.read_csv(path_to_proj+"Materiels/"+"imagettes.csv")
+imagettes=imagettes[imagettes["path"].isin(fold_to_keep)]
+
 
 def to_reference_labels (df,class_colum,frame=frame):
     
@@ -150,7 +162,7 @@ def intersection_over_union(boxA, boxB):
 
 
 
-imagettes=pd.read_csv(path_to_proj+"Materiel/"+"imagettes.csv")
+
 
    
 
@@ -216,16 +228,9 @@ def prepare_labels_marc(name_test,imagettes):
 
     imagettes_copy=imagettes.copy()
     One_image=imagettes_copy[imagettes_copy["filename"]==name_test]
-    #if name_test=='image_2019-04-22_19-11-23.jpg':
-    #    print("taille table",len(One_image))
-    
-    #path="/mnt/VegaSlowDataDisk/c3po/Images_aquises/DonneesPI/timeLapsePhotos_Pi1_0/"
-    #path_base="/mnt/BigFast/VegaFastExtension/Rpackages/c3po_all/c3po/Images_aquises"
-    path_base="../../../../.."
+    path_base="../../../.."
     path_folder=One_image["path"].iloc[0][1:]+"/"
     path=path_base+path_folder
-    #path=path_folder
-    #big_image_path="/mnt/VegaSlowDataDisk/c3po/Images_aquises/DonneesPI/timeLapsePhotos_Pi1_0/image_2019-04-30_18-55-20.jpg"
     big_image_path=path+name_test
     big_image=cv2.imread(big_image_path)
       

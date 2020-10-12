@@ -9,33 +9,33 @@ import config
 import model
 import pandas as pd
 from sklearn.model_selection import train_test_split
-#import common_2
 import common
-#S assurer que nbr_reponse correspond bien à FP+TP
-#Bien sûr tester sur train et ensuite sur test
-#trouver paramètre qui influence par exemple seuil et pred_conf
-#rajouter du bruit
-#Essayer avec modèle entrainer si ça ne fonctionne pas
-#Allons voir erreur pour cette image "/mnt/VegaSlowDataDisk/c3po/Images_aquises/DonneesPI/timeLapsePhotos_Pi1_4/image_2019-06-15_04-16-45.jpg"
-#Retrouve bien les fp
-#ds_to_analyze=["image_2019-06-15_04-16-45.jpg"]
 
-path_model_saved="/mnt/BigFast/VegaFastExtension/Rpackages/c3po_all/c3po_interface_mark/Materiels/Models/Yolo_models/"
-neurone="training_jeux_difficile_updated"
+
+fold_to_keep=[       './DonneesPI/timeLapsePhotos_Pi1_4',
+       './DonneesPI/timeLapsePhotos_Pi1_3',
+       './DonneesPI/timeLapsePhotos_Pi1_2',
+       './DonneesPI/timeLapsePhotos_Pi1_1',
+       './DonneesPI/timeLapsePhotos_Pi1_0']
+
+
+
+
+Mat_path="../../Materiels/"
 neurone="training_jeux_difficile"
-#neurone="generateur_sans_flip_2000"
+string=Mat_path+neurone
 
-string=path_model_saved+neurone
-
-imagettes=pd.read_csv("/mnt/BigFast/VegaFastExtension/Rpackages/c3po_all/c3po/Images_aquises/imagettes.csv")
+path_to_proj="../../"
+imagettes=pd.read_csv(path_to_proj+"Materiels/"+"imagettes.csv")
+imagettes=imagettes[imagettes["path"].isin(fold_to_keep)]
 imagettes=common.to_reference_labels (imagettes,"classe")
 index_train,index_test=common.split(imagettes)
 
 
 #Choose  index_test or index_train
 index=index_test
-#images, labels, labels2=common.read_imagettes(imagettes[imagettes["filename"].isin(index)])
-images, labels, labels2=common.read_imagettes(imagettes[imagettes["filename"].isin(index)])
+im_file=imagettes[imagettes["filename"].isin(index)].iloc[0:2]
+images, labels, labels2=common.read_imagettes(im_file)
 images=np.array(images, dtype=np.float32)/255
 labels=np.array(labels, dtype=np.float32)
 
