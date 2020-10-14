@@ -11,6 +11,7 @@ import pickle
 import os
 from sklearn.model_selection import train_test_split
 from numpy import save
+import pickle
 
 #path
 Mat_path="../../Materiels/"
@@ -87,5 +88,12 @@ X_test=np.array(X_test)
 
 save('imagettes_train_all_types.npy', X_train)
 save('imagettes_test_all_types.npy', X_test)
-save('labels_train_all_types.npy', Y_train)
-save('labels_test_all_types.npy', Y_test)
+
+
+with open("labels_train_all_types.txt", "wb") as fp:   #Pickling
+    pickle.dump(Y_train, fp)
+
+with open("labels_test_all_types.txt", "wb") as fp:   #Pickling
+    pickle.dump(Y_test, fp)
+
+
