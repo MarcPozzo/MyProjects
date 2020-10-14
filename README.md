@@ -34,6 +34,10 @@ Custom Convolutional Neural Networks was used such as Lenet or YoloV2.
 The picture below is an overview of the project where birds detect are represented with green squares.
 ![FO](https://user-images.githubusercontent.com/30336936/94801959-1fc0f480-03e7-11eb-9986-534e52c07f3a.jpg)
 
+This is not possible  to execute scripts inside because I cannot share pictures. That is why I propose you I explain strategies I used. 
+If you want to have a quick overview of my work and use my algorithme in several pictures please type:
+cd Birds_Detection/Demonstration
+python3 inference.py
 If you want more details about this project go to the README in Birds_Detection
 
 If you want more details or to collaborate with me, please feel free to contact me at my email:

@@ -127,10 +127,3 @@ for folder in liste_folders:
         
 
     
-    
-"""
-sudo docker-compose up
-positionning.php
-vim bashServer.py 
-setup.md
-"""
