@@ -6,25 +6,19 @@ Created on Thu Oct  8 20:14:38 2020
 @author: marcpozzo
 """
 
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Jul  4 09:38:50 2019
 
-@author: khalid
-"""
 
 # USAGE
 # python extract_features.py
 
 # import the necessary packages
-from sklearn.preprocessing import LabelEncoder
+#from sklearn.preprocessing import LabelEncoder
 from keras.applications import VGG16
 from keras.applications import imagenet_utils
 from keras.preprocessing.image import img_to_array
 from keras.preprocessing.image import load_img
-from pyimagesearch import config
-from imutils import paths
+import config
+#from imutils import paths
 import numpy as np
 import pickle
 import random
