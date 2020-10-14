@@ -21,7 +21,7 @@ from keras.preprocessing.image import ImageDataGenerator
 from keras.models import Sequential
 from keras.layers import Dense, MaxPooling2D,Flatten
 from keras.layers.convolutional import Conv2D
-
+import pickle
 
 
 fichierClasses= "/mnt/VegaSlowDataDisk/c3po/Images_aquises/Table_Labels_to_Class.csv" # overwritten by --classes myFile
@@ -302,3 +302,20 @@ def get_X_Y(base):
     return X,Y,base
 
 
+def concatenate_X_Y(X,Y,category,liste_array):
+    array=np.array(liste_array)
+    if len(array)!=0:
+        X=np.concatenate((array, X), axis=0)
+
+        liste_fp = [category] * len(array)
+        Y=liste_fp+Y
+        
+    return X,Y
+
+def add_list(specific_animal_liste,animals_paths):
+    liste_array=[]
+    for image in specific_animal_liste:
+        with open(animals_paths+image, "rb") as fp:   # Unpickling
+            liste_image = pickle.load(fp)
+        liste_array=liste_array+liste_image
+    return liste_array
