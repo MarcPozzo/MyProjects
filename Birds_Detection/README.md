@@ -19,13 +19,13 @@ If Requirements are satisfied then type :
 
 
 2 methods types of method can be used :
-1) Manually extract objects by images differences and then analyse extracted objects with neural network (for exemple VGG16, Lenet).
+1) Manually extract objects by images differences and then analyze extracted objects with neural network (for exemple VGG16, Lenet).
 2) Use specialzed neural network which automaticaly extract objects and analyze them ( for exemple Yolo, RCNN, ...).  
 
-1) Manually extraction
+## Manually extraction
 
 For a given image when a bird has just appeared, if you make the substraction with this image and the previous one (when there was still no bird), an important differences will appear in the area of the bird. 
-Several smaller difference can appear in other areas of the picture if there are for exemple new shadows. In the below picture the squares represent differences with previous image:
+Several smaller differences can appear in other areas of the picture if there are for exemple new shadows. In the below picture the squares represent differences with previous image:
 ![imageRectanglesTest_light](https://user-images.githubusercontent.com/30336936/95189697-7c992200-07ce-11eb-9201-d5c96e27b020.jpg)
 
 
@@ -35,11 +35,7 @@ Below you can see in green the square areas predicted by Lenet CNN as birds and 
 
 ![FO](https://user-images.githubusercontent.com/30336936/94801959-1fc0f480-03e7-11eb-9986-534e52c07f3a.jpg)
 
-For our use we only need to detect birds in fields, the rest of the picture is not useful. 
-We can notice that several objects are identified outside of the field see above. 
-These extracted objects could be a source of failure and this is not useful.
-That is why we will set a mask to hide the unuseful part.
-Below the image before and after to set the mask. 
+For our use case we only need to detect birds in fields, the rest of the picture is not useful this why I a mask is set.
 
 
 Before to set the mask
@@ -49,9 +45,9 @@ Before to set the mask
 After to set the mask
 ![pic3_wout_mask](https://user-images.githubusercontent.com/30336936/95606657-ed546e80-0a5a-11eb-82e3-8c83413b10c7.jpg)
 
-2) Model with automatic extraction
+## Model with automatic extraction
 
-Now we are using YoloV2. Birds are represented by blue squares and a rabit is represented with green square.
+Now we are using YoloV2. Birds are represented by blue squares and a rabit is represented with green squares.
 
 ![Yolo_detection](https://user-images.githubusercontent.com/30336936/95216255-2342ea00-07f2-11eb-893b-e65cda60e1b1.png)
 
@@ -65,7 +61,7 @@ Demonstration : folder containing a summary of the steps taken in the other file
 
 Model_Results : Run VGG16, Lenet or Yolov2 and displays the number of birds find and the number of False Positive
 
-Train : Train Different version of custom Lenet neural networks 
+Train : Train Different versions of custom Lenet neural networks 
 
 bin : script used by raspberry pi
 
