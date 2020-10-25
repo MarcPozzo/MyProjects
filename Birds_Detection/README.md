@@ -5,7 +5,7 @@ Birds eat seeds in fields and farmers loose a part of their harverst, that is wh
 Custom Convolutional Neural Network was used such as Lenet, VGG16 or YoloV2.
 
 # Instruction for a quick try :
-A test with YoloV2 is now available for a small sample of pictures. If you want to test it, make sure the libraries are installed with the required version see above :
+A test with YoloV2 is now available for a small sample of pictures. If you want to test it, make sure the libraries are installed with the required version see below :
 - tensorflow=1.13.1
 - Keras=2.2.4
 - openCV=3.4.2
@@ -25,7 +25,7 @@ If Requirements are satisfied then type :
 ## Manually extraction
 
 For a given image when a bird has just appeared, if you make the substraction with this image and the previous one (when there was still no bird), an important differences will appear in the area of the bird. 
-Several smaller differences can appear in other areas of the picture if there are for exemple new shadows. In the below picture the squares represent differences with previous image:
+However several small differences may appear in other areas of the image if there are for example new shadows that form see the image below:
 ![imageRectanglesTest_light](https://user-images.githubusercontent.com/30336936/95189697-7c992200-07ce-11eb-9201-d5c96e27b020.jpg)
 
 
@@ -35,7 +35,7 @@ Below you can see in green the square areas predicted by Lenet CNN as birds and 
 
 ![FO](https://user-images.githubusercontent.com/30336936/94801959-1fc0f480-03e7-11eb-9986-534e52c07f3a.jpg)
 
-For our use case we only need to detect birds in fields, the rest of the picture is not useful this why I a mask is set.
+For our use case we only need to detect birds in fields, the rest of the picture is not useful this is why I a mask is set.
 
 
 Before to set the mask
@@ -47,7 +47,7 @@ After to set the mask
 
 ## Model with automatic extraction
 
-Now we are using YoloV2. Birds are represented by blue squares and a rabit is represented with green squares.
+Now we are using YoloV2. Birds are represented by blue squares and a rabit is represented with green squares. the number above the squares represents the percentage of certainty of predicting the obtained class
 
 ![Yolo_detection](https://user-images.githubusercontent.com/30336936/95216255-2342ea00-07f2-11eb-893b-e65cda60e1b1.png)
 
@@ -59,7 +59,7 @@ We can notice that YoloV2 well trained can detect birds and other animals that a
 
 Demonstration : folder containing a summary of the steps taken in the other files
 
-Model_Results : Run VGG16, Lenet or Yolov2 and displays the number of birds find and the number of False Positive
+Model_Results : Run VGG16, Lenet or Yolov2 and displays the number of birds find and the number of False Positives
 
 Train : Train Different versions of custom Lenet neural networks 
 

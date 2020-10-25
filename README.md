@@ -12,8 +12,8 @@ The picture below is an overview of the project where birds detect are represent
 
 If you want give a try with Yolo you can type :
 - cd Birds_Detection/Demonstration
-_ python3 inference.py
-If you want more details about this project go to the README in Birds_Detection, I will explain the strategies I used
+- python3 inference.py
+If you want more details about this project go to the README in Birds_Detection, I will explain the strategies I used.
 
 
 
@@ -24,14 +24,15 @@ If you want more details about this project go to the README in Birds_Detection,
 The goal is to develop  models of metered building energy usage in the following areas: 
 - chilled water, electric, 
 - hot water,  
-- steam meters. The data comes from over 1,000 buildings over a three-year timeframe.
+- steam meters. 
+- The data comes from over 1,000 buildings over a three-year timeframe.
 It refers to the kaggle competition for more details and to download data follow the link below: 
-https://www.kaggle.com/c/ashrae-energy-prediction
+- https://www.kaggle.com/c/ashrae-energy-prediction
 
 
 ## MovieRecommenderProject (start in Februar 2019)
 
-I made a recommender engine proposing to a users the best movie(s) corresponding to its taste.
+I made a recommender engine proposing to a user the best movie(s) corresponding to its tastes.
 You have the possibility to rapidely try it in opening a terminal in MovieRecommenderProject/MovieRecommenderEngine and typing :
 python3 Action_Engine.py
 You should get something like that in your terminal :
