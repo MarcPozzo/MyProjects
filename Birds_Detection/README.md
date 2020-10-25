@@ -1,19 +1,21 @@
+# Introduction
+
 The puropose is to detect a maximum of birds in fields with a raspberrypi. This raspberrypi is connected to a camera taking a new picture every 12 secondes. 
 Birds eat seeds in fields and farmers loose a part of their harverst, that is why we want to detect them in order to make them fear. 
 Custom Convolutional Neural Network was used such as Lenet, VGG16 or YoloV2.
 
-This is not possible  to execute scripts inside because I cannot share pictures. That is why I propose you I explain strategies I used. 
-If you want to have a quick overview of my work and use my algorithme in several pictures please type:
-cd Birds_Detection/Demonstration
-python3 inference.py
+# Instruction for quick try :
+A test with YoloV2 is now available for a small sample of pictures. If you want to test it, make sure the libraries are installed with the required version see above :
+- tensorflow=1.13.1
+- Keras=2.2.4
+- openCV=3.4.2
 
-Requirement for the demonstration:
-tensorflow=1.13.1
-Keras=2.2.4
-openCV/cv2=3.4.2
- 
-If you want a quick look of my script, I suggest you to go in demonstration folder where there are the most important scripts. 
-This work is still in progress because I began to transfert it in October, that is why few scrip may be missing or path could be wrong. I will correct it as soon as possible. 
+If Requirements are satisfied then type :
+- cd Birds_Detection/Demonstration
+- python3 inference.py
+
+
+#Strategies and methods useds
 
 
 2 methods types of method can be used :

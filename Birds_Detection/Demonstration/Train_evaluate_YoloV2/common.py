@@ -24,7 +24,7 @@ frame=pd.read_csv(fichierClasses,index_col=False)
 
 def to_reference_labels (df,class_colum,frame=frame):
     
-    
+    """
     #Select the Pi images
     folder_to_keep= ['./DonneesPI/timeLapsePhotos_Pi1_4',
        './DonneesPI/timeLapsePhotos_Pi1_3',
@@ -32,7 +32,7 @@ def to_reference_labels (df,class_colum,frame=frame):
        './DonneesPI/timeLapsePhotos_Pi1_1',
        './DonneesPI/timeLapsePhotos_Pi1_0']   
     df=df[df["path"].isin(folder_to_keep)]
-
+    """
     ## Transform labels in workable labels
     #flatten list in Labels_File
     cat=[]
