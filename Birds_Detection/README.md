@@ -4,7 +4,7 @@ The puropose is to detect a maximum of birds in fields with a raspberrypi. This 
 Birds eat seeds in fields and farmers loose a part of their harverst, that is why we want to detect them in order to make them fear. 
 Custom Convolutional Neural Network was used such as Lenet, VGG16 or YoloV2.
 
-# Instruction for quick try :
+# Instruction for a quick try :
 A test with YoloV2 is now available for a small sample of pictures. If you want to test it, make sure the libraries are installed with the required version see above :
 - tensorflow=1.13.1
 - Keras=2.2.4
@@ -15,40 +15,32 @@ If Requirements are satisfied then type :
 - python3 inference.py
 
 
-#Strategies and methods useds
+# Strategies and methods useds
 
 
 2 methods types of method can be used :
-1) Manually extract objects by images differences and then analyse extracted objects with neural network (for exemple VGG16, Lenet, ...).
+1) Manually extract objects by images differences and then analyse extracted objects with neural network (for exemple VGG16, Lenet).
 2) Use specialzed neural network which automaticaly extract objects and analyze them ( for exemple Yolo, RCNN, ...).  
 
 1) Manually extraction
 
-For a given image when a bird has just appeared, if you make the substraction with this image and the previous one (when there was still no bird), an important difference will appear in the area  of the bird. 
-Several smaller difference can appear in other area of the picture if there are for exemple new shadows. In the below picture the square represent difference with previous image:
+For a given image when a bird has just appeared, if you make the substraction with this image and the previous one (when there was still no bird), an important differences will appear in the area of the bird. 
+Several smaller difference can appear in other areas of the picture if there are for exemple new shadows. In the below picture the squares represent differences with previous image:
 ![imageRectanglesTest_light](https://user-images.githubusercontent.com/30336936/95189697-7c992200-07ce-11eb-9201-d5c96e27b020.jpg)
 
 
-These square areas are extracted and consider as to be analalized.
-Below you can see in green the square predict as birds and in blue the are area not predict as a bird.
+These square areas are extracted and then should be analyzed.
+Below you can see in green the square areas predicted by Lenet CNN as birds and in blue the square areas not predict as a bird.
 
-
-
-
-
-Below an image of Birds detected (green squares) by Lenet CNN
 
 ![FO](https://user-images.githubusercontent.com/30336936/94801959-1fc0f480-03e7-11eb-9986-534e52c07f3a.jpg)
 
 For our use we only need to detect birds in fields, the rest of the picture is not useful. 
-We can notice that several objects are identified outside of the field. 
-Altought in this case these objects aren't identified as birds, it could be a source of failure and this is not useful.
+We can notice that several objects are identified outside of the field see above. 
+These extracted objects could be a source of failure and this is not useful.
 That is why we will set a mask to hide the unuseful part.
 Below the image before and after to set the mask. 
 
-
-
-Several objects are identified outside of the field
 
 Before to set the mask
 ![pic3_mask](https://user-images.githubusercontent.com/30336936/95606479-ad8d8700-0a5a-11eb-9aaf-8e0574aef498.jpg)
@@ -67,10 +59,11 @@ We can notice that YoloV2 well trained can detect birds and other animals that a
 ![byolo](https://user-images.githubusercontent.com/30336936/95218793-f47a4300-07f4-11eb-82ed-b2a380168ef5.jpg)
 
 
+# Description of folders 
 
+Demonstration : folder containing a summary of the steps taken in the other files
 
-Model_Results
-Run VGG16, Lenet or Yolov2 and displays the number of birds find and the number of False Positive
+Model_Results : Run VGG16, Lenet or Yolov2 and displays the number of birds find and the number of False Positive
 
 Train : Train Different version of custom Lenet neural networks 
 
