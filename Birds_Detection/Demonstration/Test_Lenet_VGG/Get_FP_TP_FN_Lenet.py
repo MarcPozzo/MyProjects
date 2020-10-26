@@ -15,7 +15,7 @@ from os.path import basename, join
 import numpy as np
 import time
 from tensorflow.keras.models import load_model
-from os import chdir
+#from os import chdir
 
 
 
@@ -38,7 +38,6 @@ imagettes=imagettes[imagettes["classe"].isin(liste_to_keep)]
 
 
 liste_folders=['/DonneesPI/timeLapsePhotos_Pi1_0','/DonneesPI/timeLapsePhotos_Pi1_1','/DonneesPI/timeLapsePhotos_Pi1_2','/DonneesPI/timeLapsePhotos_Pi1_3','/DonneesPI/timeLapsePhotos_Pi1_4'   ]
-liste_folders=['/DonneesPI/timeLapsePhotos_Pi1_0']
 
 
 

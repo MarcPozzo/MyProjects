@@ -7,18 +7,19 @@ import cv2
 import pandas as pd
 import numpy as np
 from numpy import load
-from imutils import grab_contours
-from skimage.measure import compare_ssim
+#from imutils import grab_contours
+#from skimage.measure import compare_ssim
 import math
 from keras.applications import VGG16
 import joblib
 
 
 #Load models
-Mat_path="../Materiels/"
-Model1 = joblib.load(Mat_path+"model.cpickle")
-filtre_RL = joblib.load(Mat_path+"RL_annotation_model")
-coef_filtre=pd.read_csv(Mat_path+"coefs_filtre_RQ.csv")
+Mat_path="../../Materiels/"
+Mod_path=Mat_path+"Models/"
+Model1 = joblib.load(Mod_path+"model.cpickle")
+filtre_RL = joblib.load(Mod_path+"RL_annotation_model")
+coef_filtre=pd.read_csv(Mod_path+"coefs_filtre_RQ.csv")
 model = VGG16(weights="imagenet", include_top=False)
 
 ######################################################################################################################################################

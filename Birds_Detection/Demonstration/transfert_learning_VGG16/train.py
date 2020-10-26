@@ -12,10 +12,8 @@ Created on Thu Oct  8 19:58:00 2020
 # import the necessary packages
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import classification_report
-from pyimagesearch import config
 import numpy as np
 import pickle
-import os
 from matplotlib import pyplot as plt
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import GridSearchCV
@@ -25,27 +23,16 @@ from sklearn.linear_model import Lasso
 from sklearn.externals import joblib
 import pandas as pd
 
-
-exec(open("functions.py").read())
-
-
-# derive the paths to the training and testing CSV files
-trainingPath = os.path.sep.join([config.BASE_CSV_PATH,
-	"{}.csv".format(config.TRAIN)])
-testingPath = os.path.sep.join([config.BASE_CSV_PATH,
-	"{}.csv".format(config.TEST)])
-
-# load the data from disk
-print("[INFO] loading data...")
-#(trainX, trainY, namesTRAIN) = load_data_split(trainingPath)
-#(testX, testY, namesTEST) = load_data_split(testingPath)
-train=pd.read_csv('X_train.csv')
+#Load Train and Test sets
+train=pd.read_csv('train.csv')
 trainX=train.iloc[:,:-1]
 trainY=train.iloc[:,-1]
+
+test=pd.read_csv('test.csv')
+testX=test.iloc[:,:-1]
+testY=test.iloc[:,-1]
 ### Train with Logistic Regression 
 
-# load the label encoder from disk
-le = pickle.loads(open(config.LE_PATH, "rb").read())
 
 # train the model
 print("[INFO] training model...")
@@ -57,7 +44,8 @@ model_logit.fit(testX, testY)
 print("[INFO] evaluating...")
 preds = model_logit.predict(testX)
 # val proba : model.predict_proba(testX)
-print(classification_report(testY, preds, target_names=le.classes_))
+print(classification_report(testY, preds))
+#print(classification_report(testY, preds, target_names=le.classes_))
 
 # Erreur
 model_logit.score(testX, testY)
@@ -66,7 +54,7 @@ model_logit.coef_
 
 # serialize the model to disk
 print("[INFO] saving model...")
-f = open(config.MODEL_PATH, "wb")
+f = open("model_log", "wb")
 f.write(pickle.dumps(model_logit))
 f.close()
 
@@ -215,37 +203,3 @@ f.close()
 
 
 
-## Train the model with R using python(RPY2)
-
-from rpy2.robjects import FactorVector
-from rpy2.robjects.packages import importr
-# to transfer numpy objects
-import rpy2.robjects.numpy2ri
-rpy2.robjects.numpy2ri.activate()
-stats = importr('stats')
-base = importr('base')
-
-import rpy2.robjects as ro
-import rpy2.robjects.numpy2ri
-
-
-test1X = testX[0:50,0:88]
-test1X = ro.r['as.data.frame'](test1X)
-#ro.r['setwd']('/home/pi')
-load = ro.r['load']
-Model = load("~/Bureau/Chaine_de_traitement/output/regressionlog.rda")
-
-ro.globalenv['test1X'] = test1X
-
-newPredict = ro.r['predict'](ro.r['Model'], ro.r['test1X'])
-
-# sending a data.frame for new analysis
-numpyIris = np.array(ro.r['iris'])
-ro.r['assign']('RIrisDF',ro.r['as.data.frame'](numpyIris))
-ro.r('''names(RIrisDF) <- names(iris)''')
-
-newPredict = ro.r['predict'](ro.r['a'],ro.r['RIrisDF'])
-
-# getting back a result
-res = ro.r['res']
-numpyResult = np.asarray(res)
