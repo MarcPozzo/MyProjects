@@ -37,11 +37,11 @@ testingPath = os.path.sep.join([config.BASE_CSV_PATH,
 
 # load the data from disk
 print("[INFO] loading data...")
-(trainX, trainY, namesTRAIN) = load_data_split(trainingPath)
-(testX, testY, namesTEST) = load_data_split(testingPath)
-
-
-
+#(trainX, trainY, namesTRAIN) = load_data_split(trainingPath)
+#(testX, testY, namesTEST) = load_data_split(testingPath)
+train=pd.read_csv('X_train.csv')
+trainX=train.iloc[:,:-1]
+trainY=train.iloc[:,-1]
 ### Train with Logistic Regression 
 
 # load the label encoder from disk
