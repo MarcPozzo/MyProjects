@@ -12,7 +12,7 @@ import pandas as pd
 
 #Set Parameters
 Mat_path="../../Materiels/"
-neurone="training_jeux_difficile"
+neurone="Models/training_jeux_difficile"
 string=Mat_path+neurone
 imagettes_to_keep=['image_2019-06-14_15-46-54.jpg', 'image_2019-06-14_15-47-11.jpg','image_2019-06-14_15-47-28.jpg']
 
@@ -100,8 +100,6 @@ for i in range(len(images)):
   
   
   
-  #cv2.imshow("Inference", images[i])
-  #cv2.resizeWindow("Inference", 12, 12)
   cv2.imshow("Bonne reponse", img)
   cv2.imshow("Inference", img2)
     
