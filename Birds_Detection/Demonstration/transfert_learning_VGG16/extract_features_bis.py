@@ -19,7 +19,7 @@ from sklearn.model_selection import train_test_split
 #Paramètres par défaut
 data_path="../../../.."
 data_path='../../../../Pic_dataset/'
-Mat_path="../../Materiels/"
+mat_path="../../Materiels/"
 
 
 
@@ -30,18 +30,16 @@ model = VGG16(weights="imagenet", include_top=False)
 
 
 
-images=pd.read_csv(Mat_path+"images.csv")
-imagettes=images
-liste_imagettes=list(images["filename"].unique())
-liste_imagettes_train,liste_imagettes_test=train_test_split(liste_imagettes,test_size=0.2,random_state=42)
-imagettes_train=images[images["filename"].isin(liste_imagettes_train)]
-imagettes_test=images[images["filename"].isin(liste_imagettes_test)]
+Images=pd.read_csv(mat_path+"images.csv")
+imagettes_=list(Images["filename"].unique())
+imagettes_train_,imagettes_test_=train_test_split(imagettes_,test_size=0.2,random_state=42)
+Imagettes_train=Images[Images["filename"].isin(imagettes_train_)]
+Imagettes_test=Images[Images["filename"].isin(imagettes_test_)]
 
-tableau_features_train=fn.get_tables(imagettes_train,model,liste_imagettes_train[:2],data_path)
-
+Features_train=fn.get_tables(Imagettes_train,model,imagettes_train_[:2],data_path)
+#Features_test=fn.get_tables(Imagettes_test,model,imagettes_test_,data_path)
 
 
 #Get train and test sets
-#train,test=fn.get_train_test_sets(imagettes, imagettes_animals, model, data_path)
-#train.to_csv('train.csv', index=False)
-#test.to_csv('test.csv', index=False)
+#Features_train.to_csv('train.csv', index=False)
+#Features_test.to_csv('test.csv', index=False)
