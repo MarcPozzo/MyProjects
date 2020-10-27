@@ -6,9 +6,8 @@ Created on Mon Oct 26 08:48:29 2020
 @author: marcpozzo
 """
 
-#Rajouter preprocess input
-#Transfo en dataset
-#random table
+#This scripts extract the output of VGG16 
+#In the next script train.py a training is making with these outputs
 from keras.applications import VGG16
 import functions_VGG as fn
 import pandas as pd

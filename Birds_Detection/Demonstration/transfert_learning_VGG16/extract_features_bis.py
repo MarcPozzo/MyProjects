@@ -10,18 +10,16 @@ Created on Tue Oct 27 09:43:09 2020
 #This scripts extract the output of VGG16 
 #In the next script train.py a training is making with these outputs
 from keras.applications import VGG16
-import functions_VGG as fn
+import functions_VGG_bis as fn
 import pandas as pd
-
+from sklearn.model_selection import train_test_split
 
 
 
 #Paramètres par défaut
 data_path="../../../.."
+data_path='../../../../Pic_dataset/'
 Mat_path="../../Materiels/"
-path_folder=data_path+"DonneesPI/"
-fichierClasses= Mat_path+"Table_Labels_to_Class.csv" # overwritten by --classes myFile
-frame=pd.read_csv(fichierClasses,index_col=False) # table of species into classes 
 
 
 
@@ -31,19 +29,19 @@ print("[INFO] loading network...")
 model = VGG16(weights="imagenet", include_top=False)
 
 
-#Select only animals categories
 
-imagettes=pd.read_csv(Mat_path+"imagettes.csv")
-imagettes=fn.to_reference_labels (imagettes,"classe",frame)
-folders_to_keep=['./DonneesPI/timeLapsePhotos_Pi1_4','./DonneesPI/timeLapsePhotos_Pi1_3','./DonneesPI/timeLapsePhotos_Pi1_2','./DonneesPI/timeLapsePhotos_Pi1_1','./DonneesPI/timeLapsePhotos_Pi1_0']
-imagettes=imagettes[imagettes["path"].isin(folders_to_keep)]
-liste_animals=["chevreuil","corneille","faisan","lapin","pigeon","oiseau"]
-imagettes_animals=imagettes[imagettes["classe"].isin(liste_animals)]
+images=pd.read_csv(Mat_path+"images.csv")
+imagettes=images
+liste_imagettes=list(images["filename"].unique())
+liste_imagettes_train,liste_imagettes_test=train_test_split(liste_imagettes,test_size=0.2,random_state=42)
+imagettes_train=images[images["filename"].isin(liste_imagettes_train)]
+imagettes_test=images[images["filename"].isin(liste_imagettes_test)]
 
+tableau_features_train=fn.get_tables(imagettes_train,model,liste_imagettes_train[:2],data_path)
 
 
 
 #Get train and test sets
-train,test=fn.get_train_test_sets(imagettes, imagettes_animals, model, data_path)
-train.to_csv('train.csv', index=False)
-test.to_csv('test.csv', index=False)
+#train,test=fn.get_train_test_sets(imagettes, imagettes_animals, model, data_path)
+#train.to_csv('train.csv', index=False)
+#test.to_csv('test.csv', index=False)
