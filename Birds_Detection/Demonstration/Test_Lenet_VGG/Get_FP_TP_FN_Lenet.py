@@ -48,14 +48,8 @@ FN1_by_thresh=[]
 FN2_by_thresh=[]
 nb_folder_diff_thresh=[]
 nb_folder_oiseau_thresh=[]
-#tresh_list=[0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.72,0.74,0.76,0.78,0.8,0.82,0.84,0.86,0.88,0.9,0.92,0.94,0.96,0.98,0.99]
-tresh_list=[0.2,0.95]
 tresh_list=[0,0.4,0.6,0.7,0.9]
-tresh_list=[0.5]
-#tresh_list=[0]
-#tresh_list=[0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,0.92,0.95,0.97,0.999]
-#tresh_list=[0]
-#tresh_list=[0.3,0.6,0.9]
+
 start=time.time()
 
 for thresh_t in tresh_list:
@@ -88,7 +82,7 @@ for thresh_t in tresh_list:
             name_ref=liste_image_ref[index_of_ref]
             print(name_test,name_ref)
             
-            imageA,imageB,cnts,batchImages_stack_reshape,generate_square,TP_birds,FP,TP_estimates,FP_estimates,liste_Diff_birds,nb_oiseaux=fn.base_4C_poly(name_test,name_ref,
+            imageA,imageB,cnts,batchImages_stack_reshape,generate_square,TP_birds,FP,TP_estimates,FP_estimates,liste_Diff_birds,nb_oiseaux=fn.Lenet_prediction(name_test,name_ref,
                                                                                                                             folder,CNNmodel,blockSize=25,thresh=0,
                                                                                                                             blurFact=17,chanels=3,contrast=-8,maxAnalDL=thresh_t,method="light",mask=True,focus="bird_prob")
     
