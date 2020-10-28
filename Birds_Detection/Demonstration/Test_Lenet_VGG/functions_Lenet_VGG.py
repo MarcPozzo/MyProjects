@@ -27,8 +27,8 @@ model = VGG16(weights="imagenet", include_top=False)
 ##Prediction
 
 
-#Prediction with Lenet with 3 or 4chanels
-def base_4C_poly(name_test,name_ref,folder,CNNmodel,maxAnalDL,seuil=210,
+#Prediction with Lenet with 3 or 4chanels for Lenet neural networks
+def Lenet_prediction(name_test,name_ref,folder,CNNmodel,maxAnalDL,seuil=210,
                  diff_mod="HSV",method="light",
                  chanels=3,numb_classes=6,mask=False,coverage_threshold=0.99,
                  contrast=-5,blockSize=53,blurFact=15,
@@ -111,8 +111,8 @@ def base_4C_poly(name_test,name_ref,folder,CNNmodel,maxAnalDL,seuil=210,
 
 
 
-#Prediction with VGG16 (transfert learning and regression logistic 3 chanels)
-def base_VGG16(name_test,name_ref,folder,
+#Combine VGG16 outputs from pre-trained weight and logistic trained with the output of VGG16
+def stacking_prediction(name_test,name_ref,folder,
                                  method="ssim",numb_classes=2,mask=True,coverage_threshold=0.99,contrast=-5,blockSize=53,blurFact=25,filtre_choice="No_filtre", thresh=0.99, thresh_active=True,index=False,down_thresh=25):
 
     

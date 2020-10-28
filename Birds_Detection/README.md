@@ -57,20 +57,11 @@ We can notice that well trained YoloV2 can detect birds and other animals that a
 
 # Description of folders 
 
-Demonstration : folder containing a summary of the steps taken in the other files
+- Demonstration : folder containing a summary of the steps taken in the other files
+- Matériels : data ressources such as tables, images, CNNs saved ... 
+- Archives : old scripts not yet usable, searching and testing new lines of approach
 
-Model_Results : Run VGG16, Lenet or Yolov2 and display the number of birds find and the number of False Positives
 
-Train : Train Different versions of custom Lenet neural networks 
-
-bin : script used by raspberry pi
-
-Matériels : data ressources such as tables, images, CNNs saved ... 
-
-Research_and_optimization_of_parameters : search new parameter such as new classes and try to find the best parameters for images' differences.
-
-Positionnement : script to switch positions in photo view to position in map view
-Parameter_GPU : first explorations to make the GPU work
 
 
 

@@ -12,7 +12,7 @@ find_dominant_colors cherche la couleur de fond majoritaire pour
 Imagette_Size : impact des différents types de filtres (ssim, diff basique, ...) 
     sur le nombre et la taille des imagettes extraites 
 
-
+- Parameter_GPU : first explorations to make the GPU work
 
 
 
