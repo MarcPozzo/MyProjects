@@ -26,8 +26,19 @@ model = VGG16(weights="imagenet", include_top=False)
 
 ##Prediction
 
-
+#peut être enlever la partie 4C
 #Prediction with Lenet with 3 or 4chanels for Lenet neural networks
+#Peut être renomer Lenet_prediction_evaluation
+#Reorganiser para
+#Soit on garde les para et on les enlève à côté ou bien, on les enlève ici ...
+"""def Lenet_prediction(name_test,name_ref,folder,CNNmodel,maxAnalDL,seuil=210,
+                 diff_mod="HSV",method="light",
+                 chanels=3,numb_classes=6,mask=False,coverage_threshold=0.99,
+                 contrast=-5,blockSize=53,blurFact=15,
+                 filtre_choice="No_filtre", thresh=0.5, thresh_active=True,index=False,
+                 down_thresh=25,focus="bird_prob"):"""
+
+
 def Lenet_prediction(name_test,name_ref,folder,CNNmodel,maxAnalDL,seuil=210,
                  diff_mod="HSV",method="light",
                  chanels=3,numb_classes=6,mask=False,coverage_threshold=0.99,
@@ -39,6 +50,7 @@ def Lenet_prediction(name_test,name_ref,folder,CNNmodel,maxAnalDL,seuil=210,
     #Parameters
     #Dictionnary to convert string labels to num labels
     dic_labels_to_num,dic_num_to_labels=dictionnaire_conversion_mclasses(numb_classes)
+    
     #Definition des images
     path_images=folder+"/"
     path="../../.."
@@ -47,6 +59,7 @@ def Lenet_prediction(name_test,name_ref,folder,CNNmodel,maxAnalDL,seuil=210,
     image_test=path+path_images+name_test
     imageA=cv2.imread(image_ref)
     imageB=cv2.imread(image_test)
+
     #Ouverture des fichiers annotes  si on voulait gagner du temps on pourrait le sortir de la fonction
     imagettes=pd.read_csv("/mnt/BigFast/VegaFastExtension/Rpackages/c3po_all/c3po/Images_aquises/imagettes.csv")
     nom_classe,imagettes_target=open_imagettes_file(imagettes,folder,name_test)
@@ -628,9 +641,11 @@ def dictionnaire_conversion_mclasses(numb_classes):
     
     return dic_labels_to_num,dic_num_to_labels
 
-
-def open_imagettes_file(imagettes,folder,name_test):
+#On devrait l'inserer directement dans les fichiers de prediction
+#Il y en a pour 3 lignes ...
+def open_imagettes_file(Images,folder,name_test):
     
+    """
     #Select only animals categories
     liste_to_keep=["chevreuil","corneille","faisan","lapin","pigeon","oiseau"]
     imagettes=to_reference_labels (imagettes,"classe")
@@ -639,24 +654,25 @@ def open_imagettes_file(imagettes,folder,name_test):
     
     folder_choosen="."+ folder
     imagettes_folder=imagettes[(imagettes["path"]==folder_choosen) ]
-
+    """
+    
 
     #On selectionne seulement pour la photo sur laquel on veut rep�rer les oiseaux ou autres animaux et on r�arange les colonnes dans le bon ordre
-    imagettes_target=imagettes_folder[imagettes_folder["filename"]==name_test]
-    to_drop=['path', 'filename', 'width', 'height', 'index']
-    imagettes_target=imagettes_target.drop(to_drop,axis=1)
-    col = list(imagettes_target.columns)[-1:] + list(imagettes_target.columns)[:-1]
-    imagettes_target=imagettes_target[col]
+    Images_target=Images[Images["filename"]==name_test]
+    to_drop=['filename']
+    Images_target=Images_target.drop(to_drop,axis=1)
+    col = list(Images_target.columns)[-1:] + list(Images_target.columns)[:-1]
+    Images_target=Images_target[col]
     
     
     
     #On regarde si il y a des imagettes de type diff�rents pas forc�ment utiles surtout si on garde les oiseaux undefined
-    if len(imagettes_target["classe"].unique())>1:
+    if len(Images_target["classe"].unique())>1:
         print("attention il y a plusieurs especes d'animaux" )
     #nom_classe=imagettes1["classe"].iloc[0]
-    nom_classe=list(imagettes_target["classe"].unique())
+    nom_classe=list(Images_target["classe"].unique())
     
-    return nom_classe,imagettes_target
+    return nom_classe,Images_target
 
 
 
