@@ -14,6 +14,3 @@ The first amout of data comes from "anoted imagettes". Then we will generate new
 - Model_Results : Run VGG16, Lenet or Yolov2 and display the number of birds find and the number of False Positives
 - bin : script used by raspberry pi to detect birds
 - Positionnement : script to switch positions in photo view to position in map view
-Parameter_GPU : first explorations to make the GPU work
-Train : Train Different versions of custom Lenet neural networks 
-Research_and_optimization_of_parameters : search new parameter such as new classes and try to find the best parameters for images' differences.
