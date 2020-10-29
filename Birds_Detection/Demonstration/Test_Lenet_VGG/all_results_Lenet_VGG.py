@@ -9,7 +9,7 @@ Created on Mon Sep 21 16:18:33 2020
 
 
 import pandas as pd
-import functions_Lenet_VGG as fn
+import functions_Lenet_VGG_work_in_progress as fn
 import os
 from os.path import basename, join
 import numpy as np
@@ -25,10 +25,10 @@ import pickle
 #Paramètres par défaut
 data_path='../../../../Pic_dataset/'
 Mat_path="../../Materiels/"
-neurone_feature=Mat_path+"drop_out.50"
+neurone_feature=Mat_path+"Models/drop_out.50"
 CNNmodel  = load_model(neurone_feature,compile=False)
 Images=pd.read_csv(Mat_path+"images.csv")
-
+Imagettess=pd.read_csv(Mat_path+"imagettes.csv")
 
 
 #imagettes=imagettes[imagettes["classe"].isin(liste_to_keep)] 
@@ -50,7 +50,7 @@ for r, d, f in os.walk(data_path):
 images_.sort()   
 
 #Gather the names of picture with birds
-images_birds_=list(images["filename"].unique()) # images with birds
+images_birds_=list(Images["filename"].unique()) # images with birds
 (nb_folder_TP,nb_folder_FP)=(0,0)
 
 for parameter in liste_parameter:

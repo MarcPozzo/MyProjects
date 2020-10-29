@@ -1,14 +1,17 @@
 #This script is the support when it comes to test Lenet or VGG16
 #The script is divided in several sections noted with ##:Predictions, Filters functions, Evaluate predictions, 
 #Assign a class to an image, Adjust extracted imagette, Add 4th chanel
+#import imutils
+
+
 
 import ast
 import cv2
 import pandas as pd
 import numpy as np
 from numpy import load
-#from imutils import grab_contours
-#from skimage.measure import compare_ssim
+from imutils import grab_contours
+from skimage.measure import compare_ssim
 import math
 from keras.applications import VGG16
 import joblib
@@ -39,7 +42,7 @@ model = VGG16(weights="imagenet", include_top=False)
                  down_thresh=25,focus="bird_prob"):"""
 
 
-def Lenet_prediction(name_test,name_ref,folder,CNNmodel,maxAnalDL,seuil=210,
+def Lenet_prediction(Images,name_test,name_ref,folder,CNNmodel,maxAnalDL,seuil=210,
                  diff_mod="HSV",method="light",
                  chanels=3,numb_classes=6,mask=False,coverage_threshold=0.99,
                  contrast=-5,blockSize=53,blurFact=15,
@@ -54,16 +57,16 @@ def Lenet_prediction(name_test,name_ref,folder,CNNmodel,maxAnalDL,seuil=210,
     #Definition des images
     path_images=folder+"/"
     path="../../.."
-
-    image_ref=path+path_images+name_ref
-    image_test=path+path_images+name_test
+    data_path='../../../../Pic_dataset/'
+    image_ref=data_path+name_ref
+    image_test=data_path+name_test
     imageA=cv2.imread(image_ref)
     imageB=cv2.imread(image_test)
-
-    #Ouverture des fichiers annotes  si on voulait gagner du temps on pourrait le sortir de la fonction
-    imagettes=pd.read_csv("/mnt/BigFast/VegaFastExtension/Rpackages/c3po_all/c3po/Images_aquises/imagettes.csv")
-    nom_classe,imagettes_target=open_imagettes_file(imagettes,folder,name_test)
-    nb_oiseaux=len(imagettes_target)
+    Images_target=Images[Images["filename"]==name_test]
+    #A-t-on besoin d'enlever filename
+    Images_target=Images_target.drop('filename',axis=1)
+    nb_oiseaux=len( Images_target)
+    print("Birds in the picture: ",nb_oiseaux)
     #Set Mask
  
     if mask==True:
@@ -73,9 +76,6 @@ def Lenet_prediction(name_test,name_ref,folder,CNNmodel,maxAnalDL,seuil=210,
         imageA=imageA.astype(np.uint8)
        
   
-    #maxAnalDL=0.1
-    #Organize generated imagettes and apply filters
-    #cnts=filtre_light(imageA,imageB,blockSize=blockSize,contrast=contrast,blurFact=blurFact)
     cnts=diff_images(imageA,imageB,contrast=contrast,blockSize=blockSize,blurFact = blurFact,method=method,seuil=seuil)
 
     if  cnts :
@@ -93,9 +93,9 @@ def Lenet_prediction(name_test,name_ref,folder,CNNmodel,maxAnalDL,seuil=210,
             batchImages_stack_reshape=get_4C_all_batch(batchImages_stack_reshape,Diff,table_non_filtre)
     
         #On classe les imagettes génères en fonction de l'espace avec laquelle ses coordonnees correspondent sur l'image
-        
+        #Il faudrait vérifier ici qu'on est vraiment obligé de bouger les colonnes comme on l'a fait au-dessus
         (liste_Diff_animals,dict_anotation_index_to_classe,liste_DIFF_birds_defined,liste_DIFF_birds_undefined,birds_defined_match,liste_DIFF_corbeau,
-         liste_DIFF_faisan,liste_DIFF_pigeon,liste_DIFF_other_animals)=class_imagettes_sans_dboucle(generate_square,coverage_threshold,imagettes_target,dic_labels_to_num) 
+         liste_DIFF_faisan,liste_DIFF_pigeon,liste_DIFF_other_animals)=class_imagettes_sans_dboucle(generate_square,coverage_threshold, Images_target,dic_labels_to_num) 
         
         (liste_Diff_birds,liste_Diff_animals,birds_match,liste_Diff_not_birds,liste_Diff_animals,
         liste_DIFF_not_matche)=rearrange_dif(liste_DIFF_birds_defined,liste_DIFF_birds_undefined,liste_DIFF_other_animals,birds_defined_match,batchImages_stack_reshape)
@@ -239,10 +239,7 @@ def diff_images(imageA,imageB,contrast=-5,blockSize=51,blurFact = 25,method="lig
                 thresholdType=cv2.THRESH_BINARY,blockSize=blockSize,C=contrast) # adaptation de C � histogram de la photo ?
         threshS=th2BlurTh
     
-            # defines corresponding regions of change
-        cnts = cv2.findContours(threshS.copy(), cv2.RETR_EXTERNAL,
-                            cv2.CHAIN_APPROX_SIMPLE)
-        cnts = grab_contours(cnts)
+
         
     elif method=="ssim":
         
@@ -258,10 +255,11 @@ def diff_images(imageA,imageB,contrast=-5,blockSize=51,blurFact = 25,method="lig
         threshS = cv2.dilate(thresh,(3,3))
         threshS = cv2.erode(threshS,(3,3),iterations=1)
         
-        cnts = cv2.findContours(threshS.copy(), cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
-                            
-        cnts = grab_contours(cnts)
-        
+
+    # defines corresponding regions of change
+    cnts = cv2.findContours(threshS.copy(), cv2.RETR_EXTERNAL,
+                            cv2.CHAIN_APPROX_SIMPLE)
+    cnts = grab_contours(cnts)    
     return cnts
 
 
