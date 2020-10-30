@@ -1,30 +1,25 @@
-#This is the script functions support for Train.py, inference.py and custom_loss.py
-
-#Load Libraries
+from os import chdir
+#chdir("/mnt/BigFast/VegaFastExtension/Rpackages/c3po_all/c3po_interface_mark/test_Yolo/6_classes_loss/")
 import tensorflow as tf
+#from tensorflow.keras import layers, models
+import json
 import random
 import cv2
 import numpy as np
+import math
 import config
 import pandas as pd
+from pandas.core.common import flatten
 from sklearn.model_selection import train_test_split
 import ast
 import time
 
+#fichierClasses= "/mnt/BigFast/VegaFastExtension/Rpackages/c3po_all/c3po/Images_aquises/Table_Labels_to_Class.csv" # overwritten by --classes myFile
+#frame=pd.read_csv(fichierClasses,index_col=False)
 
-
-
-
-
-#Set paramaters
-Mat_path="../../Materiels/"
-fichierClasses= Mat_path+"Table_Labels_to_Class.csv" # overwritten by --classes myFile
-frame=pd.read_csv(fichierClasses,index_col=False)
-
-
-def to_reference_labels (df,class_colum,frame=frame):
+def to_reference_labels (df,class_colum,frame):
     
-    """
+    
     #Select the Pi images
     folder_to_keep= ['./DonneesPI/timeLapsePhotos_Pi1_4',
        './DonneesPI/timeLapsePhotos_Pi1_3',
@@ -32,7 +27,7 @@ def to_reference_labels (df,class_colum,frame=frame):
        './DonneesPI/timeLapsePhotos_Pi1_1',
        './DonneesPI/timeLapsePhotos_Pi1_0']   
     df=df[df["path"].isin(folder_to_keep)]
-    """
+
     ## Transform labels in workable labels
     #flatten list in Labels_File
     cat=[]
@@ -41,19 +36,16 @@ def to_reference_labels (df,class_colum,frame=frame):
 
     liste = [ast.literal_eval(item) for item in cat]
 
-
     # set nouvelle_classe to be the "unified" class name
     for j in range(len(frame["categories"])):
         #classesToReplace = frame["categories"][j].split(",")[0][2:-1]
         className = frame["categories"][j].split(",")[0][2:-1]
         #df["nouvelle_classe"]=df["classe"].replace(classesToReplace,className)
         df[class_colum]=df[class_colum].replace(liste[j],className)
-        
 
     #Select only categories with enough values
     liste_to_keep=["chevreuil","corneille","faisan","lapin","pigeon"]
     df=df[df["classe"].isin(liste_to_keep)]
-
     return df
 
 def sigmoid(x):
@@ -80,11 +72,11 @@ def prepare_image(image, labels, grille=True):
         if labels[y, x, box, 4]:
           ids=np.argmax(labels[y, x, box, 5:])
           
-          x_center=int(round(labels[y, x, box, 0]*config.r_x))
-          y_center=int(round(labels[y, x, box, 1]*config.r_y))
+          x_center=int((labels[y, x, box, 0]*config.r_x))
+          y_center=int((labels[y, x, box, 1]*config.r_y))
           print(x_center,y_center)
-          w_2=int(round(labels[y, x, box, 2]*config.r_x/2))
-          h_2=int(round(labels[y, x, box, 3]*config.r_y/2))
+          w_2=int((labels[y, x, box, 2]*config.r_x/2))
+          h_2=int((labels[y, x, box, 3]*config.r_y/2))
           x_min=x_center-w_2
           y_min=y_center-h_2
           x_max=x_center+w_2
@@ -110,11 +102,11 @@ def prepare_image_debug(image, labels, grille=True):
         if labels[y, x, box, 4]:
           ids=np.argmax(labels[y, x, box, 5:])
           
+          h_2=int(round(labels[y, x, box, 3]*config.r_y/2))
           x_center=int(round(labels[y, x, box, 0]*config.r_x))
           y_center=int(round(labels[y, x, box, 1]*config.r_y))
           print(x_center,y_center)
           w_2=int(round(labels[y, x, box, 2]*config.r_x/2))
-          h_2=int(round(labels[y, x, box, 3]*config.r_y/2))
           x_min=x_center-w_2
           y_min=y_center-h_2
           x_max=x_center+w_2
@@ -126,8 +118,7 @@ def prepare_image_debug(image, labels, grille=True):
 
 def bruit(image):
   h, w, c=image.shape
-  #n=np.random.randn(h, w, c)*random.randint(5, 30)
-  n=np.random.randn(h, w, c)*random.randint(1, 10)
+  n=np.random.randn(h, w, c)*random.randint(5, 30)
   return np.clip(image+n, 0, 255).astype(np.uint8)
 
 def gamma(image, alpha=1.0, beta=0.0):
@@ -147,11 +138,11 @@ def intersection_over_union(boxA, boxB):
 
 
 
-
+#imagettes=pd.read_csv("/mnt/BigFast/VegaFastExtension/Rpackages/c3po_all/c3po/Images_aquises/imagettes.csv")
 
    
 
-def read_imagettes(imagettes):
+def read_imagettes(imagettes,nbr,coef=1.3,flip=True):
   images=[]
   labels=[]
   labels2=[]
@@ -160,14 +151,15 @@ def read_imagettes(imagettes):
 
   liste_name_test=list(imagettes["filename"].unique())
 
-  for name_test in liste_name_test:
-      image, label, label2=prepare_labels_demo(name_test, imagettes_copy)
-     
+  for i in range(nbr):
+      for name_test in liste_name_test:
+          image, label, label2=prepare_labels_marc_first(name_test,imagettes_copy,coef=1.3,flip=True)
          
-      if image is not None:
-          images.append(image)
-          labels.append(label)
-          labels2.append(label2)
+             
+          if image is not None:
+              images.append(image)
+              labels.append(label)
+              labels2.append(label2)
  
     
   images=np.array(images)
@@ -176,28 +168,286 @@ def read_imagettes(imagettes):
   return images, labels, labels2  
 
 
- 
 
 
-def prepare_labels_demo(name_test,imagettes):
+def prepare_labels_marc(name_test,imagettes):
+    
+    
+    imagettes_copy=imagettes.copy()
+    One_image=imagettes_copy[imagettes_copy["filename"]==name_test]
+
+    path_base="/mnt/BigFast/VegaFastExtension/Rpackages/c3po_all/c3po/Images_aquises"
+    path_folder=One_image["path"].iloc[0][1:]+"/"
+    path=path_base+path_folder
+    big_image_path=path+name_test
+    image=cv2.imread(big_image_path)
+      
+    coeff=1
+    
+    if coeff is None:
+      coeff=random.uniform(1.1,1.1)
+    image_r=cv2.resize(image, (int(coeff*config.largeur), int(coeff*config.hauteur)))
+
+
+    
+    if coeff==1:
+      shift_x=0
+      shift_y=0
+    else:
+      shift_x=np.random.randint(image_r.shape[1]-config.largeur)
+      shift_y=np.random.randint(image_r.shape[0]-config.hauteur)
+
+    ratio_x=coeff*config.largeur/image.shape[1]
+    ratio_y=coeff*config.hauteur/image.shape[0]
+
+    flip=np.random.randint(2)
+    flip=1
+    if flip!=1:
+      image_r=cv2.flip(image_r, 1)
+
+    label =np.zeros((config.cellule_y, config.cellule_x, config.nbr_boxes, 5+config.nbr_classes), dtype=np.float32)
+    label2=np.zeros((config.max_objet, 7), dtype=np.float32)
+
+    nbr_objet=0
+    for i in range(len(One_image)):
+        One_imagette=One_image.iloc[i]
+        classe=One_imagette["classe"]
+        id_class=config.dict2.index(classe)
+        (xmin,xmax,ymin,ymax)=One_imagette[["xmin","xmax","ymin","ymax"]]
+        
+        
+
+        if flip==0:
+          x_max=int((image.shape[1]-xmin)*ratio_x)
+          y_min=int(ymin*ratio_y)
+          x_min=int((image.shape[1]-xmax)*ratio_x)
+          y_max=ymax*ratio_y
+
+
+        if flip==1:
+          x_min=int(xmin*ratio_x)
+          y_min=int(ymin*ratio_y)
+          x_max=int(xmax*ratio_x)
+          y_max=int(ymax*ratio_y)
+
+
+        if (x_min<shift_x) or (y_min<shift_y) or (x_max>shift_x+config.largeur) or (y_max>shift_y+config.hauteur):
+          continue
+        x_min=(x_min-shift_x)/config.r_x
+        y_min=(y_min-shift_y)/config.r_y
+        x_max=(x_max-shift_x)/config.r_x
+        y_max=(y_max-shift_y)/config.r_y
+        y_max=(y_max-shift_y)/config.r_y
+
+        area=(x_max-x_min)*(y_max-y_min)
+        label2[nbr_objet]=[x_min, y_min, x_max, y_max, area, 1, id_class]
+        
+        x_centre=int(x_min+(x_max-x_min)/2)
+        y_centre=int(y_min+(y_max-y_min)/2)
+        x_cell=int(x_centre)
+        y_cell=int(y_centre)
+
+        a_x_min=x_centre-config.anchors[:, 0]/2
+        a_y_min=y_centre-config.anchors[:, 1]/2
+        a_x_max=x_centre+config.anchors[:, 0]/2
+        a_y_max=y_centre+config.anchors[:, 1]/2
+
+        id_a=0
+        best_iou=0
+        for an in range(len(config.anchors)):
+          iou=intersection_over_union([x_min, y_min, x_max, y_max], [a_x_min[an], a_y_min[an], a_x_max[an], a_y_max[an]])
+          if iou>best_iou:
+            best_iou=iou
+            id_a=an
+            
+        
+        label[y_cell, x_cell, id_a, 0]=(x_max+x_min)/2
+        label[y_cell, x_cell, id_a, 1]=(y_max+y_min)/2
+        label[y_cell, x_cell, id_a, 2]=x_max-x_min
+        label[y_cell, x_cell, id_a, 3]=y_max-y_min
+        label[y_cell, x_cell, id_a, 4]=1.
+        label[y_cell, x_cell, id_a, 5+id_class]=1.
+            
+
+            
+        nbr_objet=nbr_objet+1
+        if nbr_objet==config.max_objet:
+          print("Nbr objet max atteind !!!!!")
+          break
+
+      
+    #return image_r[shift_y:shift_y+config.hauteur, shift_x:shift_x+config.largeur], label, label2
+    return image_r, label, label2
+
+
+
+
+
+def prepare_labels_marc_debug(name_test,imagettes):
+    
+    
+    imagettes_copy=imagettes.copy()
+    One_image=imagettes_copy[imagettes_copy["filename"]==name_test]
+    #if name_test=='image_2019-04-22_19-11-23.jpg':
+    #    print("taille table",len(One_image))
+    
+    #path="/mnt/VegaSlowDataDisk/c3po/Images_aquises/DonneesPI/timeLapsePhotos_Pi1_0/"
+    path_base="/mnt/BigFast/VegaFastExtension/Rpackages/c3po_all/c3po/Images_aquises"
+    path_folder=One_image["path"].iloc[0][1:]+"/"
+    path=path_base+path_folder
+    #big_image_path="/mnt/VegaSlowDataDisk/c3po/Images_aquises/DonneesPI/timeLapsePhotos_Pi1_0/image_2019-04-30_18-55-20.jpg"
+    big_image_path=path+name_test
+    image=cv2.imread(big_image_path)
+      
+    coeff=None
+    if coeff is None:
+      coeff=random.uniform(1.1,1.1)
+    image_r=cv2.resize(image, (int(coeff*config.largeur), int(coeff*config.hauteur)))
+    #image_r=gamma(image_r, random.uniform(0.7, 1.3), np.random.randint(60)-30)
+    #image_r=bruit(image_r)
+    
+    if coeff==1:
+      shift_x=0
+      shift_y=0
+    else:
+      shift_x=np.random.randint(image_r.shape[1]-config.largeur)
+      shift_y=np.random.randint(image_r.shape[0]-config.hauteur)
+
+    ratio_x=coeff*config.largeur/image.shape[1]
+    ratio_y=coeff*config.hauteur/image.shape[0]
+
+    flip=np.random.randint(1)
+    if flip!=1:
+      image_r=cv2.flip(image_r, 1)
+
+    label =np.zeros((config.cellule_y, config.cellule_x, config.nbr_boxes, 5+config.nbr_classes), dtype=np.float32)
+    label2=np.zeros((config.max_objet, 7), dtype=np.float32)
+
+    nbr_objet=0
+    for i in range(len(One_image)):
+        One_imagette=One_image.iloc[i]
+        classe=One_imagette["classe"]
+        id_class=config.dict2.index(classe)
+        (xmin,xmax,ymin,ymax)=One_imagette[["xmin","xmax","ymin","ymax"]]
+        
+        
+
+        if flip==0:
+          x_max=int((image.shape[1]-xmin)*ratio_x)
+          y_min=int(ymin*ratio_y)
+          x_min=int((image.shape[1]-xmax)*ratio_x)
+          y_max=ymax*ratio_y
+
+
+        if flip==1:
+          x_min=int(xmin*ratio_x)
+          y_min=int(ymin*ratio_y)
+          x_max=int(xmax*ratio_x)
+          y_max=ymax*ratio_y
+
+
+        if (x_min<shift_x) or (y_min<shift_y) or (x_max>shift_x+config.largeur) or (y_max>shift_y+config.hauteur):
+          continue
+        x_min=(x_min-shift_x)/config.r_x
+        y_min=(y_min-shift_y)/config.r_y
+        x_max=(x_max-shift_x)/config.r_x
+        y_max=(y_max-shift_y)/config.r_y
+        y_max=(y_max-shift_y)/config.r_y
+
+        area=(x_max-x_min)*(y_max-y_min)
+        label2[nbr_objet]=[x_min, y_min, x_max, y_max, area, 1, id_class]
+        
+        x_centre=int(x_min+(x_max-x_min)/2)
+        y_centre=int(y_min+(y_max-y_min)/2)
+        x_cell=int(x_centre)
+        y_cell=int(y_centre)
+
+        a_x_min=x_centre-config.anchors[:, 0]/2
+        a_y_min=y_centre-config.anchors[:, 1]/2
+        a_x_max=x_centre+config.anchors[:, 0]/2
+        a_y_max=y_centre+config.anchors[:, 1]/2
+
+        id_a=0
+        best_iou=0
+        for an in range(len(config.anchors)):
+          iou=intersection_over_union([x_min, y_min, x_max, y_max], [a_x_min[an], a_y_min[an], a_x_max[an], a_y_max[an]])
+          if iou>best_iou:
+            best_iou=iou
+            id_a=an
+            
+        try:
+            label[y_cell, x_cell, id_a, 0]=(x_max+x_min)/2
+            label[y_cell, x_cell, id_a, 1]=(y_max+y_min)/2
+            label[y_cell, x_cell, id_a, 2]=x_max-x_min
+            label[y_cell, x_cell, id_a, 3]=y_max-y_min
+            label[y_cell, x_cell, id_a, 4]=1.
+            label[y_cell, x_cell, id_a, 5+id_class]=1.
+            
+        except IndexError:
+            print("erreur d'index pour",name_test)
+            print("ligne",i)
+            print("shift_x",shift_x)
+            print("shift_y",shift_y)
+            print("nb im taille glob",len(imagettes[imagettes["filename"]==name_test]))
+            print("nb im enr",len(One_image))
+            print("flip",flip)
+            print(y_cell, x_cell)
+            
+        nbr_objet=nbr_objet+1
+        if nbr_objet==config.max_objet:
+          print("Nbr objet max atteind !!!!!")
+          break
+
+      
+    return image_r[shift_y:shift_y+config.hauteur, shift_x:shift_x+config.largeur], label, label2
+
+
+
+#return image_r[shift_y:shift_y+config.hauteur, shift_x:shift_x+config.largeur], label, label2
+
+
+
+
+
+
+
+def prepare_labels_marc_first(name_test,imagettes,coef=1.3,flip=True):
 
 
 
     imagettes_copy=imagettes.copy()
     One_image=imagettes_copy[imagettes_copy["filename"]==name_test]
-    big_image_path=Mat_path+"pic_ex/"+name_test
+    #if name_test=='image_2019-04-22_19-11-23.jpg':
+    #    print("taille table",len(One_image))
+    
+    #path="/mnt/VegaSlowDataDisk/c3po/Images_aquises/DonneesPI/timeLapsePhotos_Pi1_0/"
+    path_base="/mnt/BigFast/VegaFastExtension/Rpackages/c3po_all/c3po/Images_aquises"
+    path_folder=One_image["path"].iloc[0][1:]+"/"
+    path=path_base+path_folder
+    #big_image_path="/mnt/VegaSlowDataDisk/c3po/Images_aquises/DonneesPI/timeLapsePhotos_Pi1_0/image_2019-04-30_18-55-20.jpg"
+    path='../../../../Pic_dataset/'
+    big_image_path=path+name_test
     big_image=cv2.imread(big_image_path)
       
-    coeff=1
+    coeff=random.uniform(1.1, coef)
+    #coeff=1.1
+    #coeff=1
     image_r=cv2.resize(big_image, (int(round(coeff*config.largeur)), int(round(coeff*config.hauteur))))
     #image_r=gamma(image_r, random.uniform(0.7, 1.3), np.random.randint(60)-30)
     #image_r=bruit(image_r)
 
-    shift_x=0
-    shift_y=0
+    shift_x=np.random.randint(image_r.shape[1]-config.largeur)
+    shift_y=np.random.randint(image_r.shape[0]-config.hauteur)
     
     ratio_x=coeff*config.largeur/big_image.shape[1]
     ratio_y=coeff*config.hauteur/big_image.shape[0]
+
+
+
+    shift_x=0
+    shift_y=0
+    
+
 
 
     label =np.zeros((config.cellule_y, config.cellule_x, config.nbr_boxes, 5+config.nbr_classes), dtype=np.float32)
@@ -215,12 +465,28 @@ def prepare_labels_demo(name_test,imagettes):
         y_min=int((y_min*ratio_y))
         y_max=int((y_max*ratio_y))
 
+        if flip==True:
+            flip=np.random.randint(2)
             
+        #flip=1
+        if flip==0:
+            image_r=cv2.flip(image_r, 1)
+         
+            x_max=int(image_r.shape[1]-x_max)
+            x_min=int(image_r.shape[1]-x_min)
+            x_max,x_min=x_min,x_max
+            
+        if (x_min<shift_x) or (y_min<shift_y) or (x_max>shift_x+config.largeur) or (y_max>shift_y+config.hauteur):
+          continue
         x_min=(x_min-shift_x)/config.r_x
         y_min=(y_min-shift_y)/config.r_y
         x_max=(x_max-shift_x)/config.r_x
         y_max=(y_max-shift_y)/config.r_y
+        
+        
 
+
+        
         area=(x_max-x_min)*(y_max-y_min)
         label2[nbr_objet]=[x_min, y_min, x_max, y_max, area, 1, id_class]
         #if name_test=='image_2019-04-22_19-11-23.jpg':
@@ -266,30 +532,43 @@ def prepare_labels_demo(name_test,imagettes):
           break
     #if name_test=='image_2019-04-22_19-11-23.jpg':
     #    print("c etait la bonne",label2[1])
-    return image_r,label,label2
+    return image_r[shift_y:shift_y+config.hauteur, shift_x:shift_x+config.largeur], label, label2
+    #return image_r, label, label2
 
 
 
 
+
+
+"""
 def prepare_labels_marc(name_test,imagettes):
 
 
 
     imagettes_copy=imagettes.copy()
     One_image=imagettes_copy[imagettes_copy["filename"]==name_test]
-    path_base="../../../.."
+    #if name_test=='image_2019-04-22_19-11-23.jpg':
+    #    print("taille table",len(One_image))
+    
+    #path="/mnt/VegaSlowDataDisk/c3po/Images_aquises/DonneesPI/timeLapsePhotos_Pi1_0/"
+    path_base="/mnt/VegaSlowDataDisk/c3po/Images_aquises"
     path_folder=One_image["path"].iloc[0][1:]+"/"
     path=path_base+path_folder
+    #big_image_path="/mnt/VegaSlowDataDisk/c3po/Images_aquises/DonneesPI/timeLapsePhotos_Pi1_0/image_2019-04-30_18-55-20.jpg"
     big_image_path=path+name_test
     big_image=cv2.imread(big_image_path)
       
-    coeff=1
-    image_r=cv2.resize(big_image, (int(round(coeff*config.largeur)), int(round(coeff*config.hauteur))))
-    #image_r=gamma(image_r, random.uniform(0.7, 1.3), np.random.randint(60)-30)
-    #image_r=bruit(image_r)
+    coeff=random.uniform(1.1, 2.5)
+    #coeff=1
+    #image_r=cv2.resize(big_image, (int(round(coeff*config.largeur)), int(round(coeff*config.hauteur))))
+    image_r=cv2.resize(big_image, (int((coeff*config.largeur)), int((coeff*config.hauteur))))
+    image_r=gamma(image_r, random.uniform(0.7, 1.3), np.random.randint(60)-30)
+    image_r=bruit(image_r)
 
     shift_x=0
     shift_y=0
+    
+    
     
     ratio_x=coeff*config.largeur/big_image.shape[1]
     ratio_y=coeff*config.hauteur/big_image.shape[0]
@@ -363,7 +642,7 @@ def prepare_labels_marc(name_test,imagettes):
     #    print("c etait la bonne",label2[1])
     return image_r,label,label2
 
-
+"""
 
 #Inquire the prior categories
 def select_one_category(list_cat):
@@ -401,8 +680,11 @@ def split(imagettes):
     
     #Split the DataSet
     dataframe =imagettes.sort_values('filename').drop_duplicates(subset=['filename'])
-    fn_train,fn_test=train_test_split(dataframe["filename"],stratify=dataframe['cat_maj'],random_state=42,test_size=0.2)
+    fn_train,fn_test=train_test_split(dataframe["filename"],stratify=dataframe[['path', 'cat_maj']],random_state=42,test_size=0.2)
+    
     return fn_train,fn_test
+
+
 
 
 def calcul_map(Model, dataset,labels2, beta=1., seuil=0.1):
@@ -449,8 +731,7 @@ def calcul_map(Model, dataset,labels2, beta=1., seuil=0.1):
       nbr_true_boxes=np.zeros(config.nbr_classes)
       tab_index=tf.image.non_max_suppression(tab_boxes[p], pred_conf[p], 100)      
       for id in tab_index:
-        if pred_conf[p, id]>seuil:
-           
+        if pred_conf[p, id]>0.10:
           nbr_reponse[pred_ids[p, id]]+=1
           nr_rep+=1
           for box in labels2_[index_labels2]:
@@ -507,7 +788,6 @@ def calcul_map(Model, dataset,labels2, beta=1., seuil=0.1):
   rappel=tab_tp/(tab_true_boxes+1E-7)
   score=np.mean((1+beta*beta)*precision*rappel/(beta*beta*precision+rappel+1E-7))
   
-  #nr_rep ne change pas 
   return score,tp_nb,nr_rep,pres,box_caught
 
 
@@ -588,15 +868,77 @@ def train_step(images,labels,labels2,optimizer,model,train_loss):
   optimizer.apply_gradients(zip(gradients, model.trainable_variables))
   train_loss(loss)
 
+
+
 #def train(train_ds, nbr_entrainement,string,labels,labels2):
 def train(train_ds, nbr_entrainement,string,labels2,optimizer,model,train_loss,checkpoint):
+    LOSS=[]
     for entrainement in range(nbr_entrainement):
         start=time.time()
         for images, labels in train_ds:
             train_step(images, labels,labels2,optimizer,model,train_loss)
         message='Entrainement {:04d}: loss: {:6.4f}, temps: {:7.4f}'
+        LOSS.append(train_loss.result().numpy()) 
         print(message.format(entrainement+1,
                              train_loss.result(),
                              time.time()-start))
         if not entrainement%20:
             checkpoint.save(file_prefix=string)
+        
+    return LOSS
+
+
+
+#@tf.function
+def train_step_loss(images,labels,labels2,optimizer,model,train_loss):
+  with tf.GradientTape() as tape:
+    predictions_train=model(images)
+    loss_train=my_loss(labels, predictions_train,labels2)
+  gradients=tape.gradient(loss_train, model.trainable_variables)
+  optimizer.apply_gradients(zip(gradients, model.trainable_variables))
+  train_loss(loss_train)
+  return loss_train
+
+
+
+#def train(train_ds, nbr_entrainement,string,labels,labels2):
+def train_progression_losses(train_ds, nbr_entrainement,string,labels2,optimizer,model,train_loss,test_loss,checkpoint,test_ds,labels2_test):
+    LOSS=[]
+    LOSS_test=[]
+    for entrainement in range(nbr_entrainement):
+        start=time.time()
+        for images, labels in train_ds:
+            #loss_train=train_step_loss(images, labels,labels2,optimizer,model,train_loss)
+            train_step_loss(images, labels,labels2,optimizer,model,train_loss)
+        message='Entrainement {:04d}: loss: {:6.4f}, temps: {:7.4f}'
+        LOSS.append(train_loss.result().numpy()) 
+        #LOSS.append(loss_train) 
+        print(message.format(entrainement+1,
+                             train_loss.result(),
+                             time.time()-start))
+        if not entrainement%20:
+            checkpoint.save(file_prefix=string)
+            #labels2 et train ds et image à changer
+        for images_test, labels_test in test_ds:
+                    #loss_train=train_step_loss(images_test, labels_test,labels2,optimizer,model,train_loss)  
+                    loss_test=get_test_losses(images_test,labels_test,labels2_test,model,train_loss)
+                    test_loss(loss_test)
+                    loss_test=test_loss.result().numpy()
+        print("loss_test :",loss_test)
+        LOSS_test.append(loss_test) 
+        
+    return LOSS,LOSS_test
+
+
+
+
+
+
+
+#@tf.function
+def get_test_losses(images_test,labels_test,labels2_test,model,train_loss):
+    predictions=model(images_test)
+    loss_test=my_loss(labels_test, predictions,labels2_test)
+    return loss_test
+
+

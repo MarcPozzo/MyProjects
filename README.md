@@ -1,5 +1,9 @@
-# This Portfolio contains 3 projects
+# Portfolio
 
+- This Portfolio contains 3 projects described below.
+- This portfolio is dedicated to image recognition, time series and recommendation systems. 
+- The short-term objective is to provide you with code on image recognition (Birds_Detection), time series (Ashare) and recommendation systems (MovieRecommenderProject) themes that you can use as inspiration for your projects.
+- The medium term objective is to offer open source code for the bird recognition project and applicable to any image database to be classified.
 
 ## Birds_Detection (added in October 2020)
 
