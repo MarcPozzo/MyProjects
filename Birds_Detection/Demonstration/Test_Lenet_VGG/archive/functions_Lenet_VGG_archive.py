@@ -1,19 +1,16 @@
 #This script is the support when it comes to test Lenet or VGG16
 #The script is divided in several sections noted with ##:Predictions, Filters functions, Evaluate predictions, 
 #Assign a class to an image, Adjust extracted imagette, Add 4th chanel
-#import imutils
-
-
 
 import ast
 import cv2
 import pandas as pd
 import numpy as np
 from numpy import load
-from imutils import grab_contours
+#from imutils import grab_contours
 #from skimage.measure import compare_ssim
 import math
-#from keras.applications import VGG16
+from keras.applications import VGG16
 import joblib
 
 
@@ -23,58 +20,49 @@ Mod_path=Mat_path+"Models/"
 Model1 = joblib.load(Mod_path+"model.cpickle")
 filtre_RL = joblib.load(Mod_path+"RL_annotation_model")
 coef_filtre=pd.read_csv(Mod_path+"coefs_filtre_RQ.csv")
-#model = VGG16(weights="imagenet", include_top=False)
+model = VGG16(weights="imagenet", include_top=False)
 
 ######################################################################################################################################################
 
 ##Prediction
 
-#peut être enlever la partie 4C
+
 #Prediction with Lenet with 3 or 4chanels for Lenet neural networks
-#Peut être renomer Lenet_prediction_evaluation
-#Reorganiser para
-#Soit on garde les para et on les enlève à côté ou bien, on les enlève ici ...
-"""def Lenet_prediction(name_test,name_ref,folder,CNNmodel,maxAnalDL,seuil=210,
+def Lenet_prediction(name_test,name_ref,folder,CNNmodel,maxAnalDL,seuil=210,
                  diff_mod="HSV",method="light",
                  chanels=3,numb_classes=6,mask=False,coverage_threshold=0.99,
                  contrast=-5,blockSize=53,blurFact=15,
                  filtre_choice="No_filtre", thresh=0.5, thresh_active=True,index=False,
-                 down_thresh=25,focus="bird_prob"):"""
-
-
-def  Evaluate_Lenet_prediction ( Images , name_test , name_ref  , CNNmodel , maxAnalDL , seuil = 210 ,data_path='../../../../Pic_dataset/',
-                 diff_mod = "HSV" , method = "light" ,
-                 chanels = 3 , numb_classes = 6 , mask = False , coverage_threshold = 0.99 ,
-                 contrast = - 5 , blockSize = 53 , blurFact = 15 ,
-                 filtre_choice = "No_filtre" , thresh = 0.5 , thresh_active = True , index = False ,
-                 down_thresh = 25 , focus = "bird_prob" ):
+                 down_thresh=25,focus="bird_prob"):
     
     #Faire un seuil à 29 de surface
     #Parameters
     #Dictionnary to convert string labels to num labels
     dic_labels_to_num,dic_num_to_labels=dictionnaire_conversion_mclasses(numb_classes)
-    
     #Definition des images
-    data_path='../../../../Pic_dataset/'
-    image_ref=data_path+name_ref
-    image_test=data_path+name_test
+    path_images=folder+"/"
+    path="../../.."
+
+    image_ref=path+path_images+name_ref
+    image_test=path+path_images+name_test
     imageA=cv2.imread(image_ref)
     imageB=cv2.imread(image_test)
-    Images_target=Images[Images["filename"]==name_test]
-    #A-t-on besoin d'enlever filename
-    Images_target=Images_target.drop('filename',axis=1)
-    nb_oiseaux=len( Images_target)
-    print("Birds in the picture: ",nb_oiseaux)
+    #Ouverture des fichiers annotes  si on voulait gagner du temps on pourrait le sortir de la fonction
+    imagettes=pd.read_csv("/mnt/BigFast/VegaFastExtension/Rpackages/c3po_all/c3po/Images_aquises/imagettes.csv")
+    nom_classe,imagettes_target=open_imagettes_file(imagettes,folder,name_test)
+    nb_oiseaux=len(imagettes_target)
     #Set Mask
  
-    """
     if mask==True:
         imageA=mask_function_bis(folder,imageA,number_chanels=3)
         imageB=mask_function_bis(folder,imageB,number_chanels=3)
         imageB=imageB.astype(np.uint8)
         imageA=imageA.astype(np.uint8)
-    """   
+       
   
+    #maxAnalDL=0.1
+    #Organize generated imagettes and apply filters
+    #cnts=filtre_light(imageA,imageB,blockSize=blockSize,contrast=contrast,blurFact=blurFact)
     cnts=diff_images(imageA,imageB,contrast=contrast,blockSize=blockSize,blurFact = blurFact,method=method,seuil=seuil)
 
     if  cnts :
@@ -92,9 +80,9 @@ def  Evaluate_Lenet_prediction ( Images , name_test , name_ref  , CNNmodel , max
             batchImages_stack_reshape=get_4C_all_batch(batchImages_stack_reshape,Diff,table_non_filtre)
     
         #On classe les imagettes génères en fonction de l'espace avec laquelle ses coordonnees correspondent sur l'image
-        #Il faudrait vérifier ici qu'on est vraiment obligé de bouger les colonnes comme on l'a fait au-dessus
+        
         (liste_Diff_animals,dict_anotation_index_to_classe,liste_DIFF_birds_defined,liste_DIFF_birds_undefined,birds_defined_match,liste_DIFF_corbeau,
-         liste_DIFF_faisan,liste_DIFF_pigeon,liste_DIFF_other_animals)=class_imagettes_sans_dboucle(generate_square,coverage_threshold, Images_target,dic_labels_to_num) 
+         liste_DIFF_faisan,liste_DIFF_pigeon,liste_DIFF_other_animals)=class_imagettes_sans_dboucle(generate_square,coverage_threshold,imagettes_target,dic_labels_to_num) 
         
         (liste_Diff_birds,liste_Diff_animals,birds_match,liste_Diff_not_birds,liste_Diff_animals,
         liste_DIFF_not_matche)=rearrange_dif(liste_DIFF_birds_defined,liste_DIFF_birds_undefined,liste_DIFF_other_animals,birds_defined_match,batchImages_stack_reshape)
@@ -238,7 +226,10 @@ def diff_images(imageA,imageB,contrast=-5,blockSize=51,blurFact = 25,method="lig
                 thresholdType=cv2.THRESH_BINARY,blockSize=blockSize,C=contrast) # adaptation de C � histogram de la photo ?
         threshS=th2BlurTh
     
-
+            # defines corresponding regions of change
+        cnts = cv2.findContours(threshS.copy(), cv2.RETR_EXTERNAL,
+                            cv2.CHAIN_APPROX_SIMPLE)
+        cnts = grab_contours(cnts)
         
     elif method=="ssim":
         
@@ -254,11 +245,10 @@ def diff_images(imageA,imageB,contrast=-5,blockSize=51,blurFact = 25,method="lig
         threshS = cv2.dilate(thresh,(3,3))
         threshS = cv2.erode(threshS,(3,3),iterations=1)
         
-
-    # defines corresponding regions of change
-    cnts = cv2.findContours(threshS.copy(), cv2.RETR_EXTERNAL,
-                            cv2.CHAIN_APPROX_SIMPLE)
-    cnts = grab_contours(cnts)    
+        cnts = cv2.findContours(threshS.copy(), cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
+                            
+        cnts = grab_contours(cnts)
+        
     return cnts
 
 
@@ -638,11 +628,9 @@ def dictionnaire_conversion_mclasses(numb_classes):
     
     return dic_labels_to_num,dic_num_to_labels
 
-#On devrait l'inserer directement dans les fichiers de prediction
-#Il y en a pour 3 lignes ...
-def open_imagettes_file(Images,folder,name_test):
+
+def open_imagettes_file(imagettes,folder,name_test):
     
-    """
     #Select only animals categories
     liste_to_keep=["chevreuil","corneille","faisan","lapin","pigeon","oiseau"]
     imagettes=to_reference_labels (imagettes,"classe")
@@ -651,25 +639,24 @@ def open_imagettes_file(Images,folder,name_test):
     
     folder_choosen="."+ folder
     imagettes_folder=imagettes[(imagettes["path"]==folder_choosen) ]
-    """
-    
+
 
     #On selectionne seulement pour la photo sur laquel on veut rep�rer les oiseaux ou autres animaux et on r�arange les colonnes dans le bon ordre
-    Images_target=Images[Images["filename"]==name_test]
-    to_drop=['filename']
-    Images_target=Images_target.drop(to_drop,axis=1)
-    col = list(Images_target.columns)[-1:] + list(Images_target.columns)[:-1]
-    Images_target=Images_target[col]
+    imagettes_target=imagettes_folder[imagettes_folder["filename"]==name_test]
+    to_drop=['path', 'filename', 'width', 'height', 'index']
+    imagettes_target=imagettes_target.drop(to_drop,axis=1)
+    col = list(imagettes_target.columns)[-1:] + list(imagettes_target.columns)[:-1]
+    imagettes_target=imagettes_target[col]
     
     
     
     #On regarde si il y a des imagettes de type diff�rents pas forc�ment utiles surtout si on garde les oiseaux undefined
-    if len(Images_target["classe"].unique())>1:
+    if len(imagettes_target["classe"].unique())>1:
         print("attention il y a plusieurs especes d'animaux" )
     #nom_classe=imagettes1["classe"].iloc[0]
-    nom_classe=list(Images_target["classe"].unique())
+    nom_classe=list(imagettes_target["classe"].unique())
     
-    return nom_classe,Images_target
+    return nom_classe,imagettes_target
 
 
 

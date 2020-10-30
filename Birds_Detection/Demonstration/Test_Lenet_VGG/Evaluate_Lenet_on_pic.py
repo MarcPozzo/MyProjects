@@ -1,0 +1,99 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Sep 21 16:18:33 2020
+
+@author: marcpozzo
+"""
+#Ici on compare une image avec sa référence ...
+
+
+import pandas as pd
+#import functions_Lenet_VGG_work_in_progress as fn
+import os
+from os.path import basename, join
+
+import numpy as np
+import pandas as pd
+import time
+from tensorflow.keras.models import load_model
+import pickle
+
+import functions_Lenet_VGG_work_in_progress as fn
+#from os import chdir
+
+
+
+
+
+#Paramètres par défaut
+data_path='../../../../Pic_dataset/'
+Mat_path="../../Materiels/"
+neurone_feature=Mat_path+"Models/drop_out.50"
+CNNmodel  = load_model(neurone_feature,compile=False)
+Images=pd.read_csv(Mat_path+"images.csv")
+(nb_folder_TP,nb_folder_FP)=(0,0) #TP=True Positif, FP False Positif
+liste_parameter=[("bird_large","light",25,50),("bird_large","light",25,-1),("bird_large","light",17,20)]
+#Initialization
+Diff_image_FP_by_folder,Diff_image_animals_by_folder,Diff_image_image_total_by_folder,nb_FP_liste,nb_TP_liste,nb_FN1_liste,nb_FN2_liste=[[] for i in range(7)]
+
+
+
+
+#Gather the names of picture with birds
+images_birds_=list(Images["filename"].unique()) # only images containig birds
+
+
+#Gather and sort the names of all picture (with and without bird ) in a list
+images_=[]
+for r, d, f in os.walk(data_path):
+    for file in f:
+        if '.jpg' in file:
+            images_.append(basename(join(r, file)))                       
+images_.sort()   
+
+
+
+
+#loop apply in a range of pic and in a range of pictures to evaluate the number of True Positif and False Positf and save results in list
+for parameter in liste_parameter:
+    focus,method,blockSize,maxAnalDL=parameter
+    base_name=focus+"-"+method+"-"+str(blockSize)+"-"+str(maxAnalDL)+".txt"
+    nb_FP_liste=[]
+    nb_TP_liste=[]
+    
+     
+    for name_test in images_birds_:
+                       
+        index_of_ref=images_.index(name_test)-1
+        name_ref=images_[index_of_ref]
+        print(name_test,name_ref)
+        imageA,imageB,cnts,batchImages_stack_reshape,generate_square,TP_birds,FP,TP_estimates,FP_estimates,liste_Diff_birds,nb_oiseaux=fn.Evaluate_Lenet_prediction(name_test,name_ref,CNNmodel,data_path=data_path,
+                                                                                                                                                           blockSize=blockSize,thresh=0.5,
+                                                                                                                                                           blurFact=17,chanels=3,contrast=-8,
+                                                                                                                                                           maxAnalDL=maxAnalDL,method=method,
+                                                                                                                                                           mask=True,focus=focus)
+                                                                                                                            
+                                                                                                                            
+               
+        nb_TP_birds=len(TP_birds)
+        nb_FP=len(FP)
+        nb_TP_thresh=len(TP_estimates)
+        nb_FP_thresh=len(FP_estimates)
+         
+        nb_folder_TP+= nb_TP_birds
+        nb_folder_FP+=nb_FP
+    
+           
+        nb_FP_liste.append(nb_folder_FP)
+        nb_TP_liste.append(nb_folder_TP)
+       
+           
+                
+        with open(Mat_path+"FP-"+base_name, "wb") as fp:   #Pickling
+            pickle.dump(nb_FP_liste, fp)
+                    
+        with open(Mat_path+"TP-"+base_name, "wb") as fp:   #Pickling
+            pickle.dump(nb_TP_liste, fp)
+                    
+                

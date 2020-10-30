@@ -1,3 +1,10 @@
+#Goal
+
+- The medium term objective is to propose an open source project proposing various methods of image recognition, from training to assessment applicable on any set of images. 
+- This portfolio is based on the techniques used for the bird recognition project conducted by INRAE.
+
+In the meantime, I suggest you show you the code and the project specific to bird recognition.
+
 # Introduction
 
 The puropose is to detect a maximum of birds in fields.
