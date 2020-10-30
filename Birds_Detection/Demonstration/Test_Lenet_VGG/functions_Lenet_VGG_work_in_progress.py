@@ -11,9 +11,9 @@ import pandas as pd
 import numpy as np
 from numpy import load
 from imutils import grab_contours
-from skimage.measure import compare_ssim
+#from skimage.measure import compare_ssim
 import math
-from keras.applications import VGG16
+#from keras.applications import VGG16
 import joblib
 
 
@@ -23,7 +23,7 @@ Mod_path=Mat_path+"Models/"
 Model1 = joblib.load(Mod_path+"model.cpickle")
 filtre_RL = joblib.load(Mod_path+"RL_annotation_model")
 coef_filtre=pd.read_csv(Mod_path+"coefs_filtre_RQ.csv")
-model = VGG16(weights="imagenet", include_top=False)
+#model = VGG16(weights="imagenet", include_top=False)
 
 ######################################################################################################################################################
 
@@ -42,12 +42,12 @@ model = VGG16(weights="imagenet", include_top=False)
                  down_thresh=25,focus="bird_prob"):"""
 
 
-def Lenet_prediction(Images,name_test,name_ref,folder,CNNmodel,maxAnalDL,seuil=210,
-                 diff_mod="HSV",method="light",
-                 chanels=3,numb_classes=6,mask=False,coverage_threshold=0.99,
-                 contrast=-5,blockSize=53,blurFact=15,
-                 filtre_choice="No_filtre", thresh=0.5, thresh_active=True,index=False,
-                 down_thresh=25,focus="bird_prob"):
+def  Evaluate_Lenet_prediction ( Images , name_test , name_ref  , CNNmodel , maxAnalDL , seuil = 210 ,data_path='../../../../Pic_dataset/',
+                 diff_mod = "HSV" , method = "light" ,
+                 chanels = 3 , numb_classes = 6 , mask = False , coverage_threshold = 0.99 ,
+                 contrast = - 5 , blockSize = 53 , blurFact = 15 ,
+                 filtre_choice = "No_filtre" , thresh = 0.5 , thresh_active = True , index = False ,
+                 down_thresh = 25 , focus = "bird_prob" ):
     
     #Faire un seuil à 29 de surface
     #Parameters
@@ -55,8 +55,6 @@ def Lenet_prediction(Images,name_test,name_ref,folder,CNNmodel,maxAnalDL,seuil=2
     dic_labels_to_num,dic_num_to_labels=dictionnaire_conversion_mclasses(numb_classes)
     
     #Definition des images
-    path_images=folder+"/"
-    path="../../.."
     data_path='../../../../Pic_dataset/'
     image_ref=data_path+name_ref
     image_test=data_path+name_test
@@ -69,12 +67,13 @@ def Lenet_prediction(Images,name_test,name_ref,folder,CNNmodel,maxAnalDL,seuil=2
     print("Birds in the picture: ",nb_oiseaux)
     #Set Mask
  
+    """
     if mask==True:
         imageA=mask_function_bis(folder,imageA,number_chanels=3)
         imageB=mask_function_bis(folder,imageB,number_chanels=3)
         imageB=imageB.astype(np.uint8)
         imageA=imageA.astype(np.uint8)
-       
+    """   
   
     cnts=diff_images(imageA,imageB,contrast=contrast,blockSize=blockSize,blurFact = blurFact,method=method,seuil=seuil)
 

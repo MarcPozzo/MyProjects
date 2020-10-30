@@ -9,15 +9,19 @@ Created on Mon Sep 21 16:18:33 2020
 
 
 import pandas as pd
-import functions_Lenet_VGG_work_in_progress as fn
+#import functions_Lenet_VGG_work_in_progress as fn
 import os
 from os.path import basename, join
+
 import numpy as np
 import pandas as pd
 import time
 from tensorflow.keras.models import load_model
 import pickle
+
+import functions_Lenet_VGG_work_in_progress as fn
 #from os import chdir
+
 
 
 
@@ -28,10 +32,6 @@ Mat_path="../../Materiels/"
 neurone_feature=Mat_path+"Models/drop_out.50"
 CNNmodel  = load_model(neurone_feature,compile=False)
 Images=pd.read_csv(Mat_path+"images.csv")
-Imagettess=pd.read_csv(Mat_path+"imagettes.csv")
-
-
-#imagettes=imagettes[imagettes["classe"].isin(liste_to_keep)] 
 
 
 
@@ -65,7 +65,7 @@ for name_test in images_birds_:
     index_of_ref=images_.index(name_test)-1
     name_ref=images_[index_of_ref]
     print(name_test,name_ref)
-    imageA,imageB,cnts,batchImages_stack_reshape,generate_square,TP_birds,FP,TP_estimates,FP_estimates,liste_Diff_birds,nb_oiseaux=fn.Lenet_prediction(name_test,name_ref,folder,CNNmodel,
+    imageA,imageB,cnts,batchImages_stack_reshape,generate_square,TP_birds,FP,TP_estimates,FP_estimates,liste_Diff_birds,nb_oiseaux=fn.Evaluate_Lenet_prediction(name_test,name_ref,CNNmodel,
                                                                                                                                                        blockSize=blockSize,thresh=0.5,
                                                                                                                                                        blurFact=17,chanels=3,contrast=-8,
                                                                                                                                                        maxAnalDL=maxAnalDL,method=method,

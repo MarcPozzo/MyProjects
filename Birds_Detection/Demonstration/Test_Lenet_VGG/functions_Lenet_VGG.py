@@ -7,7 +7,7 @@ import cv2
 import pandas as pd
 import numpy as np
 from numpy import load
-from imutils import grab_contours
+#from imutils import grab_contours
 #from skimage.measure import compare_ssim
 import math
 f#rom keras.applications import VGG16
