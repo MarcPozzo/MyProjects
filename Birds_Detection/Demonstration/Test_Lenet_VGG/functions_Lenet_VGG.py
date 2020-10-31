@@ -1,7 +1,8 @@
 #This script is the support when it comes to test Lenet or VGG16
-#The script is divided in several sections noted with ##:Predictions, Filters functions, Evaluate predictions, 
-#Assign a class to an image, Adjust extracted imagette, Add 4th chanel
-#import imutils
+#The script is divided in several sections noted with ##:Prediction/Evaluation, Differences functions,Filters functions, Evaluate predictions, (next below)
+#Assign a class to an image, Adjust extracted imagette, Find specific areas and coordonates, gather tiny images in a unique array,Hide unusefull part of the image
+
+
 
 
 
@@ -11,9 +12,9 @@ import pandas as pd
 import numpy as np
 from numpy import load
 from imutils import grab_contours
-#from skimage.measure import compare_ssim
+from skimage.measure import compare_ssim
 import math
-#from keras.applications import VGG16
+from keras.applications import VGG16
 import joblib
 
 
@@ -77,15 +78,15 @@ def Evaluate_Lenet_prediction ( Images , name_test , name_ref  , CNNmodel , maxA
             
         #Add a 4th chanel (differention with the previous image)
         if chanels==4:
-            Diff=diff_filtre(imageA,imageB,method=diff_mod)
+            Diff=diff_image4C(imageA,imageB,method=diff_mod)
             batchImages_stack_reshape=get_4C_all_batch(batchImages_stack_reshape,Diff,table_non_filtre)
     
-        #We classify the generated thumbnails according to the annotated coordinates. If this corresponds to an area with a bird it could be a false positive or a true positive
+        #We classify the generated tiny images according to the annotated coordinates. If this corresponds to an area with a bird it could be a false positive or a true positive
         (liste_Diff_animals,dict_anotation_index_to_classe,liste_DIFF_birds_defined,liste_DIFF_birds_undefined,birds_defined_match,liste_DIFF_corbeau,
-         liste_DIFF_faisan,liste_DIFF_pigeon,liste_DIFF_other_animals)=class_imagettes_sans_dboucle(generate_square,coverage_threshold, Images_target,dic_labels_to_num) 
+         liste_DIFF_faisan,liste_DIFF_pigeon,liste_DIFF_other_animals)=class_tiny_images_caught(generate_square,coverage_threshold, Images_target,dic_labels_to_num) 
         
         (liste_Diff_birds,liste_Diff_animals,birds_match,liste_Diff_not_birds,liste_Diff_animals,
-        liste_DIFF_not_matche)=rearrange_dif(liste_DIFF_birds_defined,liste_DIFF_birds_undefined,liste_DIFF_other_animals,birds_defined_match,batchImages_stack_reshape)
+        liste_DIFF_not_matche)=rearrange_tiny_image_list(liste_DIFF_birds_defined,liste_DIFF_birds_undefined,liste_DIFF_other_animals,birds_defined_match,batchImages_stack_reshape)
         
     else:
         batchImages_stack_reshape=[]
@@ -184,10 +185,10 @@ def stacking_prediction(name_test,name_ref,folder,
         
         
         (liste_Diff_animals,dict_anotation_index_to_classe,liste_DIFF_birds_defined,liste_DIFF_birds_undefined,birds_defined_match,liste_DIFF_corbeau,
-         liste_DIFF_faisan,liste_DIFF_pigeon,liste_DIFF_other_animals)=class_imagettes_sans_dboucle(generate_square,coverage_threshold,imagettes_target,dic_labels_to_num) 
+         liste_DIFF_faisan,liste_DIFF_pigeon,liste_DIFF_other_animals)=class_tiny_images_caught(generate_square,coverage_threshold,imagettes_target,dic_labels_to_num) 
     
         (liste_Diff_birds,liste_Diff_animals,birds_match,liste_Diff_not_birds,liste_Diff_animals,
-         liste_DIFF_not_matche)=rearrange_dif(liste_DIFF_birds_defined,liste_DIFF_birds_undefined,liste_DIFF_other_animals,birds_defined_match,batchImages_stack_reshape)
+         liste_DIFF_not_matche)=rearrange_tiny_image_list(liste_DIFF_birds_defined,liste_DIFF_birds_undefined,liste_DIFF_other_animals,birds_defined_match,batchImages_stack_reshape)
         
         
         TP_birds,FP,TP_estimates,FP_estimates= miss_well_class(estimates,liste_Diff_birds,liste_DIFF_not_matche,
@@ -205,9 +206,9 @@ def stacking_prediction(name_test,name_ref,folder,
 
 
 ######################################################################################################################################################
-##Filters functions
+##Differences functions
     
-#differentiate between images and extract thumbnails in areas of greatest difference
+#make difference between 3chanels images and return tiny images in areas of greatest difference
 def diff_images(imageA,imageB,contrast=-5,blockSize=51,blurFact = 25,method="light",seuil=210):
     
     if method=="light":
@@ -253,8 +254,8 @@ def diff_images(imageA,imageB,contrast=-5,blockSize=51,blurFact = 25,method="lig
 
 
 
-
-def diff_filtre(imageA,imageB,method="HSV"):
+#make difference between 4chanels images and return tiny images in areas of greatest difference
+def diff_image4C(imageA,imageB,method="HSV"):
     if method=="HSV":
         img2 = cv2.cvtColor(imageA, cv2.COLOR_BGR2HSV)
         img1 = cv2.cvtColor(imageB, cv2.COLOR_BGR2HSV)
@@ -271,7 +272,8 @@ def diff_filtre(imageA,imageB,method="HSV"):
     return diff_Gray
 
 
-
+######################################################################################################################################################
+##Filters functions
 
 #return  only squares enought small to be birds
 def filter_by_area(table_non_filtre,filtre_choice,batchImages_stack_reshape,down_thresh):
@@ -307,7 +309,7 @@ def filter_by_area(table_non_filtre,filtre_choice,batchImages_stack_reshape,down
 
 
 
-
+#Filter tiny images depending on their weidht and their height with random forest algo
 def dim_filter(batchImages_stack_reshape,generate_square,cnts,maxAnalDL=12):
     
     if maxAnalDL>=1:
@@ -339,10 +341,380 @@ def dim_filter(batchImages_stack_reshape,generate_square,cnts,maxAnalDL=12):
     return batchImages_stack_reshape,generate_square
 
 
+
 ######################################################################################################################################################
-##Evaluate predictions
+##Adjust extracted tiny images
+
+#Recenters tiny images
+def RecenterImage(subI,o):
+    
+    h,l,r=subI.shape #on sait que r=3 (3 channels)
+    
+    # add to the dimension the dimensions of the cuts (due to image borders)
+    h = h + o.ymincut + o.ymaxcut
+    l = l + o.xmincut + o.xmaxcut
+
+    t= np.full((h, l, r), fill_value=int(round(subI.mean())),dtype=np.uint8) # black image the size of the final thing
+
+    t[o.ymincut:(h-o.ymaxcut),o.xmincut:(l-o.xmaxcut)] = subI
+    
+    return t
 
 
+
+
+def GetSquareSubset(img,h,verbose=True, xml = False):
+    
+   
+    # d�termine le plus grand c�te du carr�
+    d = max(h.ymax-h.ymin,h.xmax-h.xmin)
+      
+    # d�termine le centre du carr�
+    xcent = int(round((h.xmax-h.xmin)/2)) + h.xmin
+    ycent = int(round((h.ymax-h.ymin)/2)) + h.ymin
+    
+    # new corners
+    hd = int(math.ceil(d/2)) # half distance
+    o = pd.Series(dtype='float64')
+    o.xmin = xcent- hd
+    o.xmax = xcent+ hd
+    o.ymin = ycent- hd
+    o.ymax = ycent+ hd
+    """   
+    print(o.xmin,o.xmax)
+    print(o.ymin,o.ymax)
+    """
+    # check we are not further than the image borders
+    # get the min/max accounting for image border + n cutted pixels: o.(x|y)(min|max)cut
+    o.xmin,o.xmincut = accountForBorder(o.xmin,img.shape[1])
+    o.xmax,o.xmaxcut = accountForBorder(o.xmax,img.shape[1])
+    o.ymin,o.ymincut = accountForBorder(o.ymin,img.shape[0])
+    o.ymax,o.ymaxcut = accountForBorder(o.ymax,img.shape[0])
+    """
+    print(o.xmin,o.xmax)
+    print(o.ymin,o.ymax)
+    """
+    if(verbose):
+        # d�ssine le carr�
+        cv2.rectangle(img, (o.xmin,o.ymin), (o.xmax,o.ymax), (255, 0, 0), 2)     
+        #�criture des images
+#        cv2.imwrite("images_carre/"+h.filename[:-4]+".JPG",img1)
+        # add squares/numbers
+    
+    if(xml == True):
+        # couper l'image
+        subI = img[o.ymin:o.ymax,o.xmin:o.xmax]
+    else:
+        # couper l'image
+        # subI = imageB[o.ymin:o.ymax,o.xmin:o.xmax]
+        subI = img[o.ymin:o.ymax,o.xmin:o.xmax]
+   
+    
+    return subI, o, d, img
+
+
+ 
+    
+  
+# Verifie les bords de l'image pour la découpe    
+def accountForBorder(val,maxval):
+
+    if(val<0):
+        cut = 0-val
+        val = 0
+    elif(val>maxval):
+        cut = val - maxval
+        val = maxval    
+    else:
+        cut = 0
+    return val,cut
+
+
+
+######################################################################################################################################################
+##Find specific areas and coordonates
+    
+#area depending of coordonate
+def area_square(x_min,x_max,y_min,y_max):
+    
+
+    
+    profondeur=y_max-y_min
+    largeur=x_max-x_min
+    surface=largeur*profondeur
+    
+    return surface
+
+#area in commun between tiny images generated by the filter and tiny images annoted
+def area_intersection(x_min_gen,x_max_gen,y_min_gen,y_max_gen,  x_min_anote,x_max_anote,y_min_anote,y_max_anote   ):
+    
+    min_xmax=min(x_max_gen,x_max_anote)
+    max_xmin=max(x_min_gen,x_min_anote)
+    min_ymax=min(y_max_gen,y_max_anote) 
+    max_ymin=max(y_min_gen,y_min_anote)    
+    
+    largeur=max(0,min_xmax-max_xmin)
+    profondeur=max(0,min_ymax-max_ymin)
+    area_intersection=largeur*profondeur
+    return area_intersection
+
+
+#extract x_mi,x_max,y_min,y_max
+def get_table_coord(table_line):
+    x_min=table_line["xmin"]
+    y_min=table_line["ymin"]
+    x_max=table_line["xmax"]
+    y_max=table_line["ymax"]
+    
+    return x_min,x_max,y_min,y_max
+
+
+
+
+
+######################################################################################################################################################
+##gather tiny images in a unique array
+    
+#gather tiny images of 3Chanels in a unique array
+def batched_cnts(cnts,imageB,imageSize= 28,filtre_color=False):
+    
+    #Initialisation de variables et de liste
+    batchImages = []
+    liste_table = []
+    
+    if filtre_color==False:
+        for ic in range(0,len(cnts)):
+            (x, y, w, h) = cv2.boundingRect(cnts[ic])
+            f = pd.Series(dtype= "float64")
+            f.xmin, f.xmax, f.ymin, f.ymax = x, x+w, y, y+h
+            subI, o, d, imageRectangles = GetSquareSubset(imageB,f,verbose=False)
+            subI = RecenterImage(subI,o)
+            subI = cv2.resize(subI,(imageSize,imageSize))
+            batchImages.append(subI)
+            liste_table.append(np.array([ [f.xmin], [f.xmax], [f.ymin], [f.ymax]], ndmin = 2).reshape((1,4)))     
+    
+    
+    if filtre_color==True:
+        
+        for ic in range(0,len(cnts)):
+            (x, y, w, h) = cv2.boundingRect(cnts[ic])
+            f = pd.Series(dtype= "float64")
+            f.xmin, f.xmax, f.ymin, f.ymax = x, x+w, y, y+h
+            subI, o, d, imageRectangles = GetSquareSubset(imageB,f,verbose=False)
+            subI = RecenterImage(subI,o)
+            subI = cv2.resize(subI,(imageSize,imageSize))
+            
+            red=np.mean(subI[:,:,0])
+            green=np.mean(subI[:,:,1])
+            blue=np.mean(subI[:,:,2])
+            colors=(red,green,blue)
+            
+            #or !=
+            if np.max(colors)==blue:
+                batchImages.append(subI)
+                liste_table.append(np.array([ [f.xmin], [f.xmax], [f.ymin], [f.ymax]], ndmin = 2).reshape((1,4)))     
+    
+    
+    batchImages_stack = np.vstack(batchImages)
+    batchImages_stack_reshape=batchImages_stack.reshape((-1, imageSize,imageSize,3))
+    table_non_filtre = pd.DataFrame(np.vstack(liste_table))
+    table_non_filtre = table_non_filtre.rename(columns={ 0: 'xmin', 1: 'xmax', 2: 'ymin', 3: 'ymax'})
+    table_non_filtre=table_non_filtre.astype(int)
+    
+    
+    return batchImages_stack_reshape,table_non_filtre 
+
+#Add a 4th chanel to all tiny images. This 4th chanels corresponding of the difference in HSV between to images compares 
+def add_chanel(img,array_to_add):
+    b_channel, g_channel, r_channel = cv2.split(img)
+    img_BGRA = cv2.merge((b_channel, g_channel, r_channel, array_to_add))
+    
+    return img_BGRA
+
+#gather tiny images of 4Chanels in a unique array
+def get_4C_all_batch(batchImages_stack_reshape,Diff,table_non_filtre):
+    
+      
+
+    #Etape pour rajouter un canal sur chaque imagette
+    #Diff=diff_filtre(imageA,imageB,method=diff_mod)
+    imageSize=28
+    subI_diff_liste=[]
+    for i in range(len(table_non_filtre)):
+        
+        x_min, x_max, y_min, y_max=get_table_coord(table_non_filtre.iloc[i])
+        
+        f = pd.Series(dtype= "float64")
+        f.xmin, f.xmax, f.ymin, f.ymax = x_min, x_max, y_min, y_max
+        
+        subI_diff, o, d, imageRectangles = GetSquareSubset(Diff,f,verbose=False)
+        subi_expand=np.expand_dims(subI_diff,axis=2)
+        subI_recenter = RecenterImage(subi_expand,o)
+        subI_resize = cv2.resize(subI_recenter,(imageSize,imageSize))
+        subI_resize=np.expand_dims(subI_resize,axis=2)
+        subI_diff_liste.append(subI_resize)
+    list_4C=list(map(add_chanel,batchImages_stack_reshape,subI_diff_liste))
+    batchImages_stack_reshape=np.array(list_4C)
+    
+    return batchImages_stack_reshape
+
+
+
+
+######################################################################################################################################################
+##Evaluate 
+#Find tiny images caught corresponding to the annotation and assign them to a list corresping to their annotation then assigned tiny images in lists according of the labels predicted finlaly compare these series to evaluate results
+
+
+
+
+
+#translate the numeric output of the labels in a string label
+def class_predictions_dictionnaire(liste_prediction,class_num): 
+   #liste_DIFF_faisan,liste_DIFF_corbeau,liste_DIFF_pigeon,liste_DIFF_lapin,liste_DIFF_chevreuil,liste_DIFF_birds_undefined = ([] for i in range(6))
+   
+   index_others,index_birds,index_other_animals,index_chevreuil,index_corbeau,index_lapin,index_faisan,index_pigeon = ([] for i in range(8))
+   
+
+   map_indexes_2classes={"1":index_others, "0" :index_birds}
+   map_indexes_6classes={"0":index_others, "1" :index_chevreuil,"2":index_corbeau,"3":index_lapin,"4":index_faisan,"5":index_pigeon }
+   map_indexes_8classes={"0":index_others, "1" :index_chevreuil,"3":index_corbeau,"4":index_lapin,"5":index_faisan,"6":index_pigeon,"2":index_others,"7":index_others }
+   
+   if class_num==2:
+       map_indexes=map_indexes_2classes
+   elif class_num==6:
+       map_indexes=map_indexes_6classes
+   elif class_num==8:
+       map_indexes=map_indexes_8classes
+   else:
+       print("le nombre de classes est mal spécifiée")
+    
+   for i, j in enumerate(liste_prediction):
+       #print(i,j)
+       map_indexes[str(j)].append(i) 
+    
+    
+   index_other_animals=index_chevreuil+index_lapin
+   if     class_num !=2:
+       index_birds=index_corbeau+index_faisan+index_pigeon
+   
+   return index_others,index_birds,index_other_animals,index_chevreuil,index_corbeau,index_lapin,index_faisan,index_pigeon
+
+
+
+
+
+#When a tiny image is caught in the area of an annotation assigned it to a list corresponding in its category label
+def class_tiny_images_caught(generate_square,coverage_threshold,
+                        imagettes_target,dic_labels_to_num,precise=False):
+    
+    #Initialize empty list and dictionnary
+    liste_DIFF_birds_defined,liste_DIFF_birds_undefined,liste_DIFF_other_animals,liste_DIFF_faisan,liste_DIFF_corbeau,liste_DIFF_pigeon,liste_DIFF_lapin,liste_DIFF_chevreuil=([] for i in range(8))
+    dict_anotation_index_to_classe={}
+    
+    map_classes={"faisan":liste_DIFF_faisan, "corneille" : liste_DIFF_corbeau,"pigeon":liste_DIFF_pigeon,
+                 "lapin" :liste_DIFF_lapin, "chevreuil" :liste_DIFF_chevreuil, "oiseau" : liste_DIFF_birds_undefined,
+                 "incertain": liste_DIFF_birds_undefined, "pie":liste_DIFF_birds_undefined }
+    
+    
+    
+    birds_liste=["corneille","pigeon","faisan","oiseau","pie","incertain"]
+    nb_imagettes=len(imagettes_target)
+    
+    #set are of gen squares
+    xmin_gen,xmax_gen,ymin_gen,ymax_gen=get_table_coord(generate_square)
+    ln_square_gen=len(generate_square)
+    generate_square["num_index"]=list(generate_square.index)
+    generate_square["area"]=area_square(xmin_gen,xmax_gen,ymin_gen,ymax_gen)
+    
+    
+    #get max intersection with square generate for each sqaure annotate
+    for num_im in range(nb_imagettes):
+        
+        classe=imagettes_target["classe"].iloc[num_im]
+        x_min_anote,x_max_anote,y_min_anote,y_max_anote=get_table_coord(imagettes_target.iloc[num_im])
+        surface_anote=area_square(x_min_anote,x_max_anote,y_min_anote,y_max_anote)
+        
+        
+        #Replicated the coordinates of annotations the number time of the len  to be able to apply area_intersection function
+        zip_xmin_anote=[x_min_anote]*ln_square_gen
+        zip_xmax_anote=[x_max_anote]*ln_square_gen
+        zip_ymin_anote=[y_min_anote]*ln_square_gen
+        zip_ymax_anote=[y_max_anote]*ln_square_gen
+        
+        
+        #Select the im generated with th maximum area in commun but not too big
+        gen_square_size_filtered=generate_square[(generate_square["area"]<5*surface_anote) & (generate_square["area"]>0.5*surface_anote) ]
+        xmin_gen,xmax_gen,ymin_gen,ymax_gen=get_table_coord(gen_square_size_filtered) 
+        medium_squares=gen_square_size_filtered.copy()
+        liste_intersection=[area_intersection(a,b,c,d,e,f,g,h) for a,b,c,d,e,f,g,h in zip 
+                            (xmin_gen,xmax_gen,ymin_gen,ymax_gen, zip_xmin_anote,zip_xmax_anote,zip_ymin_anote,zip_ymax_anote ) ]
+        
+        medium_squares.loc[:,"area_intersection"]=liste_intersection
+        #medium_squares=medium_squares.reset_index()
+        
+        
+        
+        
+        medium_squares=medium_squares[medium_squares["area_intersection"]>0.5*surface_anote]
+        if len(medium_squares)!=0:
+            max_squares=medium_squares[medium_squares["area_intersection"]==max(medium_squares["area_intersection"])]
+            index_max_intersection=int(max_squares["num_index"][max_squares["area"]==min(max_squares["area"])])
+            #index_max_intersection=int(medium_squares["num_index"][medium_squares["area_intersection"]==max(medium_squares["area_intersection"])])
+            
+      
+            #ici if pour dic
+            map_classes[classe].append(index_max_intersection)   
+            
+            dict_anotation_index_to_classe[str(index_max_intersection)]=dic_labels_to_num[classe]
+    
+    #Rec indexes of selected imagette in appropriate list         
+    liste_DIFF_other_animals=liste_DIFF_chevreuil+liste_DIFF_lapin        
+    liste_DIFF_birds_defined=liste_DIFF_faisan+liste_DIFF_corbeau+liste_DIFF_pigeon
+    liste_Diff_birds=liste_DIFF_birds_defined+liste_DIFF_birds_undefined
+    liste_Diff_animals=liste_Diff_birds+liste_DIFF_other_animals
+    
+    
+    #Display the number of anomals and catched animals in this picture
+    liste_DIFF_other_animals=liste_DIFF_chevreuil+liste_DIFF_lapin
+    birds_table=imagettes_target.isin(birds_liste)
+    nb_animals_match=len(liste_DIFF_birds_defined)+len(liste_DIFF_birds_undefined)+len(liste_DIFF_other_animals)
+    nb_animals_to_find=len(imagettes_target)
+    birds_to_find=len(birds_table)
+    birds_defined_match=len(liste_DIFF_birds_defined)
+    print("nombre d'oiseaux dans l'image",birds_to_find)
+    print("nombre d'oiseaux repérés parmi les oiseaux lab�lis�s",birds_defined_match )
+    
+    if precise==False:
+        
+        return (liste_Diff_animals,dict_anotation_index_to_classe,liste_DIFF_birds_defined,liste_DIFF_birds_undefined,birds_defined_match,
+    liste_DIFF_corbeau,liste_DIFF_faisan,liste_DIFF_pigeon,liste_DIFF_other_animals)
+    
+    if precise==True:
+        return (liste_Diff_animals,dict_anotation_index_to_classe,liste_DIFF_birds_defined,liste_DIFF_birds_undefined,birds_defined_match,
+    liste_DIFF_corbeau,liste_DIFF_faisan,liste_DIFF_pigeon,liste_DIFF_lapin,liste_DIFF_chevreuil)
+
+
+#After class_tiny_images_caught rearrange tiny image caught in fewer categories
+def rearrange_tiny_image_list(liste_DIFF_birds_defined,liste_DIFF_birds_undefined,liste_DIFF_other_animals,
+                  birds_defined_match,batchImages_stack_reshape):
+    
+    #Make larger categories
+    liste_Diff_birds=liste_DIFF_birds_defined+liste_DIFF_birds_undefined
+    liste_Diff_animals=liste_Diff_birds+liste_DIFF_other_animals
+    
+    #Not matched categories
+    liste_batch_images=range(len(batchImages_stack_reshape))
+    liste_Diff_not_birds=set(liste_batch_images)-set(liste_Diff_birds)
+    liste_DIFF_not_matche=set(liste_batch_images)-set(liste_Diff_birds)-set(liste_DIFF_other_animals)
+    
+    birds_match=birds_defined_match+len(liste_DIFF_birds_undefined)
+    print("Numbers birds caught", birds_match)
+
+    return liste_Diff_birds,liste_Diff_animals,birds_match,liste_Diff_not_birds,liste_Diff_animals,liste_DIFF_not_matche
+
+
+#return the True Positif, False Positif according to the estimates and the annotations
 def miss_well_class(estimates,liste_Diff_birds,liste_DIFF_not_matche,
                     liste_DIFF_corbeau,liste_DIFF_faisan,liste_DIFF_pigeon,liste_Diff_animals,
                     thresh_active,thresh,numb_classes=6,focus="bird_large",index=False):
@@ -436,148 +808,6 @@ def miss_well_class(estimates,liste_Diff_birds,liste_DIFF_not_matche,
 
 
 
-def class_predictions_dictionnaire(liste_prediction,class_num): 
-   #liste_DIFF_faisan,liste_DIFF_corbeau,liste_DIFF_pigeon,liste_DIFF_lapin,liste_DIFF_chevreuil,liste_DIFF_birds_undefined = ([] for i in range(6))
-   
-   index_others,index_birds,index_other_animals,index_chevreuil,index_corbeau,index_lapin,index_faisan,index_pigeon = ([] for i in range(8))
-   
-
-   map_indexes_2classes={"1":index_others, "0" :index_birds}
-   map_indexes_6classes={"0":index_others, "1" :index_chevreuil,"2":index_corbeau,"3":index_lapin,"4":index_faisan,"5":index_pigeon }
-   map_indexes_8classes={"0":index_others, "1" :index_chevreuil,"3":index_corbeau,"4":index_lapin,"5":index_faisan,"6":index_pigeon,"2":index_others,"7":index_others }
-   
-   if class_num==2:
-       map_indexes=map_indexes_2classes
-   elif class_num==6:
-       map_indexes=map_indexes_6classes
-   elif class_num==8:
-       map_indexes=map_indexes_8classes
-   else:
-       print("le nombre de classes est mal spécifiée")
-    
-   for i, j in enumerate(liste_prediction):
-       #print(i,j)
-       map_indexes[str(j)].append(i) 
-    
-    
-   index_other_animals=index_chevreuil+index_lapin
-   if     class_num !=2:
-       index_birds=index_corbeau+index_faisan+index_pigeon
-   
-   return index_others,index_birds,index_other_animals,index_chevreuil,index_corbeau,index_lapin,index_faisan,index_pigeon
-
-#Rearange categories of images annoted matched by the camera 
-def rearrange_dif(liste_DIFF_birds_defined,liste_DIFF_birds_undefined,liste_DIFF_other_animals,
-                  birds_defined_match,batchImages_stack_reshape):
-    
-    #Make larger categories
-    liste_Diff_birds=liste_DIFF_birds_defined+liste_DIFF_birds_undefined
-    liste_Diff_animals=liste_Diff_birds+liste_DIFF_other_animals
-    
-    #Not matched categories
-    liste_batch_images=range(len(batchImages_stack_reshape))
-    liste_Diff_not_birds=set(liste_batch_images)-set(liste_Diff_birds)
-    liste_DIFF_not_matche=set(liste_batch_images)-set(liste_Diff_birds)-set(liste_DIFF_other_animals)
-    
-    birds_match=birds_defined_match+len(liste_DIFF_birds_undefined)
-    print("nombre d'oiseaux captur�s", birds_match)
-
-    return liste_Diff_birds,liste_Diff_animals,birds_match,liste_Diff_not_birds,liste_Diff_animals,liste_DIFF_not_matche
-
-
-
-
-#class imagettes if strict condition on area square and intersections
-
-def class_imagettes_sans_dboucle(generate_square,coverage_threshold,
-                        imagettes_target,dic_labels_to_num,precise=False):
-    
-    #Initialize empty list and dictionnary
-    liste_DIFF_birds_defined,liste_DIFF_birds_undefined,liste_DIFF_other_animals,liste_DIFF_faisan,liste_DIFF_corbeau,liste_DIFF_pigeon,liste_DIFF_lapin,liste_DIFF_chevreuil=([] for i in range(8))
-    dict_anotation_index_to_classe={}
-    
-    map_classes={"faisan":liste_DIFF_faisan, "corneille" : liste_DIFF_corbeau,"pigeon":liste_DIFF_pigeon,
-                 "lapin" :liste_DIFF_lapin, "chevreuil" :liste_DIFF_chevreuil, "oiseau" : liste_DIFF_birds_undefined,
-                 "incertain": liste_DIFF_birds_undefined, "pie":liste_DIFF_birds_undefined }
-    
-    
-    
-    birds_liste=["corneille","pigeon","faisan","oiseau","pie","incertain"]
-    nb_imagettes=len(imagettes_target)
-    
-    #set are of gen squares
-    xmin_gen,xmax_gen,ymin_gen,ymax_gen=get_table_coord(generate_square)
-    ln_square_gen=len(generate_square)
-    generate_square["num_index"]=list(generate_square.index)
-    generate_square["area"]=area_square(xmin_gen,xmax_gen,ymin_gen,ymax_gen)
-    
-    
-    #get max intersection with square generate for each sqaure annotate
-    for num_im in range(nb_imagettes):
-        
-        classe=imagettes_target["classe"].iloc[num_im]
-        x_min_anote,x_max_anote,y_min_anote,y_max_anote=get_table_coord(imagettes_target.iloc[num_im])
-        surface_anote=area_square(x_min_anote,x_max_anote,y_min_anote,y_max_anote)
-        
-        
-        #Replicated the coordinates of annotations the number time of the len  to be able to apply area_intersection function
-        zip_xmin_anote=[x_min_anote]*ln_square_gen
-        zip_xmax_anote=[x_max_anote]*ln_square_gen
-        zip_ymin_anote=[y_min_anote]*ln_square_gen
-        zip_ymax_anote=[y_max_anote]*ln_square_gen
-        
-        
-        #Select the im generated with th maximum area in commun but not too big
-        gen_square_size_filtered=generate_square[(generate_square["area"]<5*surface_anote) & (generate_square["area"]>0.5*surface_anote) ]
-        xmin_gen,xmax_gen,ymin_gen,ymax_gen=get_table_coord(gen_square_size_filtered) 
-        medium_squares=gen_square_size_filtered.copy()
-        liste_intersection=[area_intersection(a,b,c,d,e,f,g,h) for a,b,c,d,e,f,g,h in zip 
-                            (xmin_gen,xmax_gen,ymin_gen,ymax_gen, zip_xmin_anote,zip_xmax_anote,zip_ymin_anote,zip_ymax_anote ) ]
-        
-        medium_squares.loc[:,"area_intersection"]=liste_intersection
-        #medium_squares=medium_squares.reset_index()
-        
-        
-        
-        
-        medium_squares=medium_squares[medium_squares["area_intersection"]>0.5*surface_anote]
-        if len(medium_squares)!=0:
-            max_squares=medium_squares[medium_squares["area_intersection"]==max(medium_squares["area_intersection"])]
-            index_max_intersection=int(max_squares["num_index"][max_squares["area"]==min(max_squares["area"])])
-            #index_max_intersection=int(medium_squares["num_index"][medium_squares["area_intersection"]==max(medium_squares["area_intersection"])])
-            
-      
-            #ici if pour dic
-            map_classes[classe].append(index_max_intersection)   
-            
-            dict_anotation_index_to_classe[str(index_max_intersection)]=dic_labels_to_num[classe]
-    
-    #Rec indexes of selected imagette in appropriate list         
-    liste_DIFF_other_animals=liste_DIFF_chevreuil+liste_DIFF_lapin        
-    liste_DIFF_birds_defined=liste_DIFF_faisan+liste_DIFF_corbeau+liste_DIFF_pigeon
-    liste_Diff_birds=liste_DIFF_birds_defined+liste_DIFF_birds_undefined
-    liste_Diff_animals=liste_Diff_birds+liste_DIFF_other_animals
-    
-    
-    #Display the number of anomals and catched animals in this picture
-    liste_DIFF_other_animals=liste_DIFF_chevreuil+liste_DIFF_lapin
-    birds_table=imagettes_target.isin(birds_liste)
-    nb_animals_match=len(liste_DIFF_birds_defined)+len(liste_DIFF_birds_undefined)+len(liste_DIFF_other_animals)
-    nb_animals_to_find=len(imagettes_target)
-    birds_to_find=len(birds_table)
-    birds_defined_match=len(liste_DIFF_birds_defined)
-    print("nombre d'oiseaux dans l'image",birds_to_find)
-    print("nombre d'oiseaux repérés parmi les oiseaux lab�lis�s",birds_defined_match )
-    
-    if precise==False:
-        
-        return (liste_Diff_animals,dict_anotation_index_to_classe,liste_DIFF_birds_defined,liste_DIFF_birds_undefined,birds_defined_match,
-    liste_DIFF_corbeau,liste_DIFF_faisan,liste_DIFF_pigeon,liste_DIFF_other_animals)
-    
-    if precise==True:
-        return (liste_Diff_animals,dict_anotation_index_to_classe,liste_DIFF_birds_defined,liste_DIFF_birds_undefined,birds_defined_match,
-    liste_DIFF_corbeau,liste_DIFF_faisan,liste_DIFF_pigeon,liste_DIFF_lapin,liste_DIFF_chevreuil)
-
 
 ######################################################################################################################################################
 ##Assign a class to an image
@@ -602,7 +832,7 @@ def to_reference_labels (df,class_colum,frame):
 
     return df
 
-
+#return dictionnary to convert labels (strings and numerics)
 def dictionnaire_conversion_mclasses(numb_classes):
     dic_labels_to_num={}
     dic_num_to_labels={}
@@ -664,181 +894,14 @@ def open_imagettes_file(Images,folder,name_test):
 
 
 
-def batched_cnts(cnts,imageB,imageSize= 28,filtre_color=False):
-    
-    #Initialisation de variables et de liste
-    batchImages = []
-    liste_table = []
-    
-    if filtre_color==False:
-        for ic in range(0,len(cnts)):
-            (x, y, w, h) = cv2.boundingRect(cnts[ic])
-            f = pd.Series(dtype= "float64")
-            f.xmin, f.xmax, f.ymin, f.ymax = x, x+w, y, y+h
-            subI, o, d, imageRectangles = GetSquareSubset(imageB,f,verbose=False)
-            subI = RecenterImage(subI,o)
-            subI = cv2.resize(subI,(imageSize,imageSize))
-            batchImages.append(subI)
-            liste_table.append(np.array([ [f.xmin], [f.xmax], [f.ymin], [f.ymax]], ndmin = 2).reshape((1,4)))     
-    
-    
-    if filtre_color==True:
-        
-        for ic in range(0,len(cnts)):
-            (x, y, w, h) = cv2.boundingRect(cnts[ic])
-            f = pd.Series(dtype= "float64")
-            f.xmin, f.xmax, f.ymin, f.ymax = x, x+w, y, y+h
-            subI, o, d, imageRectangles = GetSquareSubset(imageB,f,verbose=False)
-            subI = RecenterImage(subI,o)
-            subI = cv2.resize(subI,(imageSize,imageSize))
-            
-            red=np.mean(subI[:,:,0])
-            green=np.mean(subI[:,:,1])
-            blue=np.mean(subI[:,:,2])
-            colors=(red,green,blue)
-            
-            #or !=
-            if np.max(colors)==blue:
-                batchImages.append(subI)
-                liste_table.append(np.array([ [f.xmin], [f.xmax], [f.ymin], [f.ymax]], ndmin = 2).reshape((1,4)))     
-    
-    
-    batchImages_stack = np.vstack(batchImages)
-    batchImages_stack_reshape=batchImages_stack.reshape((-1, imageSize,imageSize,3))
-    table_non_filtre = pd.DataFrame(np.vstack(liste_table))
-    table_non_filtre = table_non_filtre.rename(columns={ 0: 'xmin', 1: 'xmax', 2: 'ymin', 3: 'ymax'})
-    table_non_filtre=table_non_filtre.astype(int)
-    
-    
-    return batchImages_stack_reshape,table_non_filtre 
 
-
-######################################################################################################################################################
-##Adjust extracted imagette
-
-#Poue avoir un resultat en 3�me dim ou en 1 dim
-def RecenterImage(subI,o):
-    
-    h,l,r=subI.shape #on sait que r=3 (3 channels)
-    
-    # add to the dimension the dimensions of the cuts (due to image borders)
-    h = h + o.ymincut + o.ymaxcut
-    l = l + o.xmincut + o.xmaxcut
-
-    t= np.full((h, l, r), fill_value=int(round(subI.mean())),dtype=np.uint8) # black image the size of the final thing
-
-    t[o.ymincut:(h-o.ymaxcut),o.xmincut:(l-o.xmaxcut)] = subI
-    
-    return t
-
-
-
-
-def GetSquareSubset(img,h,verbose=True, xml = False):
-    
-   
-    # d�termine le plus grand c�te du carr�
-    d = max(h.ymax-h.ymin,h.xmax-h.xmin)
-      
-    # d�termine le centre du carr�
-    xcent = int(round((h.xmax-h.xmin)/2)) + h.xmin
-    ycent = int(round((h.ymax-h.ymin)/2)) + h.ymin
-    
-    # new corners
-    hd = int(math.ceil(d/2)) # half distance
-    o = pd.Series(dtype='float64')
-    o.xmin = xcent- hd
-    o.xmax = xcent+ hd
-    o.ymin = ycent- hd
-    o.ymax = ycent+ hd
-    """   
-    print(o.xmin,o.xmax)
-    print(o.ymin,o.ymax)
-    """
-    # check we are not further than the image borders
-    # get the min/max accounting for image border + n cutted pixels: o.(x|y)(min|max)cut
-    o.xmin,o.xmincut = accountForBorder(o.xmin,img.shape[1])
-    o.xmax,o.xmaxcut = accountForBorder(o.xmax,img.shape[1])
-    o.ymin,o.ymincut = accountForBorder(o.ymin,img.shape[0])
-    o.ymax,o.ymaxcut = accountForBorder(o.ymax,img.shape[0])
-    """
-    print(o.xmin,o.xmax)
-    print(o.ymin,o.ymax)
-    """
-    if(verbose):
-        # d�ssine le carr�
-        cv2.rectangle(img, (o.xmin,o.ymin), (o.xmax,o.ymax), (255, 0, 0), 2)     
-        #�criture des images
-#        cv2.imwrite("images_carre/"+h.filename[:-4]+".JPG",img1)
-        # add squares/numbers
-    
-    if(xml == True):
-        # couper l'image
-        subI = img[o.ymin:o.ymax,o.xmin:o.xmax]
-    else:
-        # couper l'image
-        # subI = imageB[o.ymin:o.ymax,o.xmin:o.xmax]
-        subI = img[o.ymin:o.ymax,o.xmin:o.xmax]
-   
-    
-    return subI, o, d, img
-
-
- 
-    
-  
-# Verifie les bords de l'image pour la d�coupe    
-def accountForBorder(val,maxval):
-
-    if(val<0):
-        cut = 0-val
-        val = 0
-    elif(val>maxval):
-        cut = val - maxval
-        val = maxval    
-    else:
-        cut = 0
-    return val,cut
-
-
-
-
-#extract x_mi,x_max,y_min,y_max
-def get_table_coord(table_line):
-    x_min=table_line["xmin"]
-    y_min=table_line["ymin"]
-    x_max=table_line["xmax"]
-    y_max=table_line["ymax"]
-    
-    return x_min,x_max,y_min,y_max
 
 
 
 
 
-def area_square(x_min,x_max,y_min,y_max):
-    
-
-    
-    profondeur=y_max-y_min
-    largeur=x_max-x_min
-    surface=largeur*profondeur
-    
-    return surface
-
-
-def area_intersection(x_min_gen,x_max_gen,y_min_gen,y_max_gen,  x_min_anote,x_max_anote,y_min_anote,y_max_anote   ):
-    
-    min_xmax=min(x_max_gen,x_max_anote)
-    max_xmin=max(x_min_gen,x_min_anote)
-    min_ymax=min(y_max_gen,y_max_anote) 
-    max_ymin=max(y_min_gen,y_min_anote)    
-    
-    largeur=max(0,min_xmax-max_xmin)
-    profondeur=max(0,min_ymax-max_ymin)
-    area_intersection=largeur*profondeur
-    return area_intersection
-
+######################################################################################################################################################
+##Hide unusefull part of the image
 
 def mask_function_bis(folder,imageB,number_chanels=3):
     
@@ -857,38 +920,3 @@ def mask_function_bis(folder,imageB,number_chanels=3):
     imageB=ImageMaksed.astype(int)
     
     return imageB
-
-######################################################################################################################################################
-##Add 4th chanel
-    
-def get_4C_all_batch(batchImages_stack_reshape,Diff,table_non_filtre):
-    
-      
-
-    #Etape pour rajouter un canal sur chaque imagette
-    #Diff=diff_filtre(imageA,imageB,method=diff_mod)
-    imageSize=28
-    subI_diff_liste=[]
-    for i in range(len(table_non_filtre)):
-        
-        x_min, x_max, y_min, y_max=get_table_coord(table_non_filtre.iloc[i])
-        
-        f = pd.Series(dtype= "float64")
-        f.xmin, f.xmax, f.ymin, f.ymax = x_min, x_max, y_min, y_max
-        
-        subI_diff, o, d, imageRectangles = GetSquareSubset(Diff,f,verbose=False)
-        subi_expand=np.expand_dims(subI_diff,axis=2)
-        subI_recenter = RecenterImage(subi_expand,o)
-        subI_resize = cv2.resize(subI_recenter,(imageSize,imageSize))
-        subI_resize=np.expand_dims(subI_resize,axis=2)
-        subI_diff_liste.append(subI_resize)
-    list_4C=list(map(add_chanel,batchImages_stack_reshape,subI_diff_liste))
-    batchImages_stack_reshape=np.array(list_4C)
-    
-    return batchImages_stack_reshape
-
-def add_chanel(img,array_to_add):
-    b_channel, g_channel, r_channel = cv2.split(img)
-    img_BGRA = cv2.merge((b_channel, g_channel, r_channel, array_to_add))
-    
-    return img_BGRA

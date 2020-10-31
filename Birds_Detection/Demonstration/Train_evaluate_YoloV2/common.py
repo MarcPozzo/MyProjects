@@ -21,7 +21,7 @@ Mat_path="../../Materiels/"
 fichierClasses= Mat_path+"Table_Labels_to_Class.csv" # overwritten by --classes myFile
 frame=pd.read_csv(fichierClasses,index_col=False)
 
-
+#convert labels in a reduced number of classes 
 def to_reference_labels (df,class_colum,frame=frame):
     
     """
@@ -404,7 +404,7 @@ def split(imagettes):
     fn_train,fn_test=train_test_split(dataframe["filename"],stratify=dataframe['cat_maj'],random_state=42,test_size=0.2)
     return fn_train,fn_test
 
-
+#Evaluate the quality of the prediction
 def calcul_map(Model, dataset,labels2, beta=1., seuil=0.1):
   tp_nb=0
   pres=0
