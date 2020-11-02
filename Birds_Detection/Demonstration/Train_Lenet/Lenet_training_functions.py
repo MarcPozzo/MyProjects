@@ -1,0 +1,86 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Nov  2 16:38:59 2020
+
+@author: marcpozzo
+"""
+
+
+
+
+
+
+from keras.models import Sequential # Pour construire un réseau de neurones
+from keras.layers import   MaxPooling2D,Dense, Conv2D,Dropout,Flatten# Pour instancier une couche dense
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+def eliminate_small_categories(df,Minimum_Number_Class):
+    numerous_labels_=[]
+    all_labels_=df["classe"].unique()
+    print("This is the list of different labels (acccording to the DataFrame) :",df["classe"].unique())
+    print("Images are now deleting from data base if the population are below ",Minimum_Number_Class)  
+    for i in df["classe"].unique():
+        if df["classe"][df["classe"]==i].count()>Minimum_Number_Class:
+            numerous_labels_.append(i)
+
+    less_numerous_labels_=set(all_labels_)-set(numerous_labels_)
+    #print(Non_Utilisable,"Non_Utilisable")
+    for i in less_numerous_labels_:
+        df=df[df["classe"]!=i] 
+
+    print("This is the list of labels keep:", df["classe"].unique())
+    return df
+
+
+def Lenet_archi(NB_CLASSES,dropout_rate):
+    lenet = Sequential()
+
+    conv_1 = Conv2D(filters = 30,                     # Nombre de filtres
+                    kernel_size = (5, 5),            # Dimensions du noyau
+                    padding = 'valid',               # Mode de Dépassement
+                    input_shape = (28, 28, 3),       # Dimensions de l'image en entrée
+                    activation = 'relu')             # Fonction d'activation
+
+    max_pool_1 = MaxPooling2D(pool_size = (2, 2))
+
+    conv_2 = Conv2D(filters = 16,                    
+                    kernel_size = (3, 3),          
+                    padding = 'valid',             
+                    activation = 'relu')
+
+    max_pool_2 = MaxPooling2D(pool_size = (2, 2))
+
+    flatten = Flatten()
+
+    dropout = Dropout(rate = dropout_rate)
+
+    dense_1 = Dense(units = 128,
+                    activation = 'relu')
+
+    dense_2 = Dense(units = 6,
+                    activation = 'softmax')
+
+    lenet.add(conv_1)
+    lenet.add(max_pool_1)
+    lenet.add(conv_2)
+    lenet.add(max_pool_2)
+    lenet.add(dropout)
+    lenet.add(flatten)
+    lenet.add(dense_1)
+    lenet.add(dense_2)
+    
+    return lenet
