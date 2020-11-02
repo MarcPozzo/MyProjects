@@ -13,7 +13,8 @@ Created on Mon Nov  2 16:38:59 2020
 
 from keras.models import Sequential # Pour construire un réseau de neurones
 from keras.layers import   MaxPooling2D,Dense, Conv2D,Dropout,Flatten# Pour instancier une couche dense
-
+import cv2
+import numpy as np
 
 
 
@@ -84,3 +85,36 @@ def Lenet_archi(NB_CLASSES,dropout_rate):
     lenet.add(dense_2)
     
     return lenet
+
+
+#Convert to 28,28 shape array 
+def convert_image(X):
+    X_img=[]
+    for image in X:
+        # Load image
+        img=cv2.imread(image)
+        # Resize image
+        img=cv2.resize(img,(28,28))
+        # for the black and white image
+        if img.shape==(28, 28):
+            img=img.reshape([28,28,1])
+            img=np.concatenate([img,img,img],axis=2)
+        # cv2 load the image BGR sequence color (not RGB)
+        X_img.append(img[...,::-1])
+    return np.array(X_img)
+
+
+#Creation of dictionnary according to generator classes to convert the number labels (0,1,2,3,4,5) to tring labels ("autre","corbeau",....)
+def map_prediction(arg_predict):
+    dictionnaire=train_generator.class_indices
+    dictionnaire_inv = {v: k for k, v in dictionnaire.items()}
+    
+    Keys=[]
+    Values=[]
+
+    for i in range(len(arg_predict)) :
+        Keys.append(arg_predict[i])
+        Values.append(dictionnaire_inv[arg_predict[i]])
+
+    #print(metrics.classification_report(Y_test, Values))
+    return Values
