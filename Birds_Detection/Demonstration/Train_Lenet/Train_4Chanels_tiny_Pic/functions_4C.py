@@ -23,9 +23,28 @@ from keras.layers import Dense, MaxPooling2D,Flatten
 from keras.layers.convolutional import Conv2D
 import pickle
 
-
-fichierClasses= "/mnt/VegaSlowDataDisk/c3po/Images_aquises/Table_Labels_to_Class.csv" # overwritten by --classes myFile
+mat_path="../../../Materiels/"
+fichierClasses= mat_path+"Table_Labels_to_Class.csv" # overwritten by --classes myFile
 frame=pd.read_csv(fichierClasses,index_col=False)
+
+
+def eliminate_small_categories(df,Minimum_Number_Class):
+    numerous_labels_=[]
+    all_labels_=df["classe"].unique()
+    print("This is the list of different labels (acccording to the DataFrame) :",df["classe"].unique())
+    print("Images are now deleting from data base if the population are below ",Minimum_Number_Class)  
+    for i in df["classe"].unique():
+        if df["classe"][df["classe"]==i].count()>Minimum_Number_Class:
+            numerous_labels_.append(i)
+
+    less_numerous_labels_=set(all_labels_)-set(numerous_labels_)
+    #print(Non_Utilisable,"Non_Utilisable")
+    for i in less_numerous_labels_:
+        df=df[df["classe"]!=i] 
+
+    print("This is the list of labels keep:", df["classe"].unique())
+    return df
+
 
 
 def cc(image,changement):
@@ -242,16 +261,18 @@ def get_liste_name_test(base):
         liste_name_test.append(image_path)
     
     return liste_name_test,filename_liste
-
+"""
 def get_liste_image_ref():
 
     path="/mnt/VegaSlowDataDisk/c3po/Images_aquises/"
+    path='../../../../../DonneesPI/'
+    chdir(path)
     folders=['timeLapsePhotos_Pi1_0','timeLapsePhotos_Pi1_1','timeLapsePhotos_Pi1_2','timeLapsePhotos_Pi1_3','timeLapsePhotos_Pi1_4']
     liste_image_ref = []
     liste_name=[]
     for folder_choose in folders:
         print(len(liste_image_ref))
-        folder="DonneesPI/"+folder_choose
+        folder=folder_choose
         pre_path=path+folder
         chdir(pre_path)
         for r, d, f in os.walk(path+folder):
@@ -262,18 +283,56 @@ def get_liste_image_ref():
                     picture_path=pre_path+"/"+name
                     liste_image_ref.append(picture_path)
     return liste_image_ref,liste_name
-
+"""
                     
+"""
 
+def get_liste_image_ref(path):
 
+    path="/mnt/VegaSlowDataDisk/c3po/Images_aquises/"
+    path='../../../../../DonneesPI/'
+    #chdir(path)
+    folders=['timeLapsePhotos_Pi1_0']
+    liste_image_ref = []
+    liste_name=[]
+    for folder_choose in folders:
+        print(len(liste_image_ref))
+        folder=folder_choose
+        pre_path=path+folder
+        chdir(pre_path)
+        for r, d, f in os.walk(path+folder):
+            for file in f:
+                if '.jpg' in file:
+                    name=basename(join(r, file))
+                    liste_name.append(name)
+                    picture_path=pre_path+"/"+name
+                    liste_image_ref.append(picture_path)
+    return liste_image_ref,liste_name
+"""
 
+def get_liste_image_ref(path):
+        liste_image_ref=[]
+        image_path='../../../../../Pic_dataset/'
+        #chdir(image_path)
+        for r, d, f in os.walk(image_path):
+            for file in f:
+                if '.jpg' in file:
+                    name=basename(join(r, file))
+                    #liste_name.append(name)
+                    picture_path=image_path+name
+                    liste_image_ref.append(picture_path)
 
+        return liste_image_ref
+    
 def get_X_Y(base):
     
-
+    path='../../../../../Pic_dataset/'
     #Get ref 
-    liste_name_test,filename_liste=get_liste_name_test(base)
-    liste_image_ref,liste_name=get_liste_image_ref()
+    #liste_name_test,filename_liste=get_liste_name_test(base)
+    liste_name_test=list(base["filename"].unique())
+    liste_name_test=[path+name for name in liste_name_test]
+    #liste_image_ref,liste_name=get_liste_image_ref(path)
+    liste_image_ref=get_liste_image_ref(path)
     X_img=convert_imagette(liste_name_test) 
     
     GBR_Diff,HSV_Diff,=make_image_difference(base,liste_image_ref,liste_name_test)
@@ -319,3 +378,5 @@ def add_list(specific_animal_liste,animals_paths):
             liste_image = pickle.load(fp)
         liste_array=liste_array+liste_image
     return liste_array
+
+

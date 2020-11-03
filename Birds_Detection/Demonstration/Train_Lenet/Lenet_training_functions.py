@@ -22,13 +22,6 @@ import numpy as np
 
 
 
-
-
-
-
-
-
-
 def eliminate_small_categories(df,Minimum_Number_Class):
     numerous_labels_=[]
     all_labels_=df["classe"].unique()

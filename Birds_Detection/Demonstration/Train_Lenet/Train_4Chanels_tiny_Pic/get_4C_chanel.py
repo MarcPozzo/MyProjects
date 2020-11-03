@@ -16,11 +16,15 @@ import time
 from sklearn.model_selection import train_test_split
 import gc
 from numpy import save
+from os.path import basename, join
+Mat_path="../../../Materiels/"
 
-Mat_path="../../Materiels/"
-
-path="/mnt/VegaSlowDataDisk/c3po/Images_aquises/"#Where you pictures are
+image_path='../../../../Pic_dataset/'
+image_path='../../../../DonneesPI/'
+#path="/mnt/VegaSlowDataDisk/c3po/Images_aquises/"#Where you pictures are
+path=image_path
 liste_folders=['./DonneesPI/timeLapsePhotos_Pi1_0','./DonneesPI/timeLapsePhotos_Pi1_1','./DonneesPI/timeLapsePhotos_Pi1_2','./DonneesPI/timeLapsePhotos_Pi1_3','./DonneesPI/timeLapsePhotos_Pi1_4']
+
 
 
 print("The 4 chanels correspond to the difference between an image and the image just before. In sense add this 4TH chanels could be considered as to add a temporel chanels.")
@@ -31,32 +35,36 @@ type_of_diff=input()
 print("Type train or test wethever you want to rec picture with a fourth chanel for train or test sample")
 print( "I advise you to beguin with small proportion to be sure that your computer has enough memory get pictures")
 Sample=input(" Please type train or test " )
-test_size = input("Type a number between 0.1 and 0.5 to indicate the proportion of data you want put in test sample : ")
+test_size = float(input("Type a number between 0.1 and 0.5 to indicate the proportion of data you want put in test sample : "))
+#test_size=float(test_size)
+
+Minimum_Number_Class=100
+
+Images=pd.read_csv(Mat_path+"Images.csv")
+Images=fn.eliminate_small_categories(Images,Minimum_Number_Class)
+images_test=list(Images["filename"].unique())
+#imagettes=pd.read_csv(Mat_path+"imagettes.csv")
+#imagettes=fn.open_table(imagettes,liste_folders)
+#liste_name_test,filename_liste=list(fn.get_liste_name_test(imagettes))
+#imagettes["filename"]=list(fn.get_liste_name_test(imagettes))[0]
 
 
-
-
-
-imagettes=pd.read_csv(Mat_path+"imagettes.csv")
-imagettes=fn.open_table(imagettes,liste_folders)
-liste_name_test,filename_liste=list(fn.get_liste_name_test(imagettes))
-imagettes["filename"]=list(fn.get_liste_name_test(imagettes))[0]
-
-
-base_train,base_test= train_test_split(imagettes,stratify=imagettes["classe"], test_size=test_size,random_state=42)
+#base_train,base_test= train_test_split(imagettes,stratify=imagettes["classe"], test_size=test_size,random_state=42)
+base_train,base_test= train_test_split(Images,stratify=Images["classe"], test_size=test_size,random_state=42)
 if Sample=="train":
     base=base_train
-    del imagettes,base_test
+    del Images,base_test
 elif Sample=="test":
     base=base_test
-    del imagettes,base_train  
+    del Images,base_train  
 gc.collect()
 
 
 
 
 start=time.time()
-X,Y_train,base_train_trans=fn.get_X_Y(base,diff=type_of_diff)
+#X,Y_train,base_train_trans=fn.get_X_Y(base[:2],diff=type_of_diff)
+X,Y_train,base_train_trans=fn.get_X_Y(base[:2])
 end=time.time()
 print(end-start)
 save('imagettes4C_'+type_of_diff+'_'+Sample +'.npy', X)
