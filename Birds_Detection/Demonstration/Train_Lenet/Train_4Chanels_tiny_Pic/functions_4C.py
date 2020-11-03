@@ -109,16 +109,15 @@ def nn(dropout_rate=0.2):
     
     return lenet
 
-
+#Gather images in a unique array
 def convert_imagette(X):
-    X_img=[]
+    images_=[]
     for image in X:
         # Load image
         img=cv2.imread(image)
-        # Resize image
-        
-        X_img.append(img[...,::-1])
-    return np.array(X_img)
+        images_.append(img[...,::-1])
+        batch_images=np.array(images_)
+    return batch_images
 
 
 
@@ -165,20 +164,9 @@ def to_imagette4C(base,liste4D_diff):
 
 
 def get_Y(base):
-    #data_generator = ImageDataGenerator(preprocessing_function = preprocess_input)
-    data_generator = ImageDataGenerator()
-    #      preprocessing_function = preprocess_input
 
-
-    generator = data_generator.flow_from_dataframe(dataframe=base,
-                                                              directory="",
-                                                               x_col = "filename",
-                                                               y_col="classe",
-                                                               class_mode ="sparse",
-                                                              target_size = (28 , 28), 
-                                                              batch_size = len(base))
-
-    Y=generator.classes
+    Y = ImageDataGenerator().flow_from_dataframe(dataframe=base,directory="../../../../Pic_dataset",y_col = "classe")
+    #Y=generator.classes
     
     return Y
 
@@ -261,54 +249,7 @@ def get_liste_name_test(base):
         liste_name_test.append(image_path)
     
     return liste_name_test,filename_liste
-"""
-def get_liste_image_ref():
 
-    path="/mnt/VegaSlowDataDisk/c3po/Images_aquises/"
-    path='../../../../../DonneesPI/'
-    chdir(path)
-    folders=['timeLapsePhotos_Pi1_0','timeLapsePhotos_Pi1_1','timeLapsePhotos_Pi1_2','timeLapsePhotos_Pi1_3','timeLapsePhotos_Pi1_4']
-    liste_image_ref = []
-    liste_name=[]
-    for folder_choose in folders:
-        print(len(liste_image_ref))
-        folder=folder_choose
-        pre_path=path+folder
-        chdir(pre_path)
-        for r, d, f in os.walk(path+folder):
-            for file in f:
-                if '.jpg' in file:
-                    name=basename(join(r, file))
-                    liste_name.append(name)
-                    picture_path=pre_path+"/"+name
-                    liste_image_ref.append(picture_path)
-    return liste_image_ref,liste_name
-"""
-                    
-"""
-
-def get_liste_image_ref(path):
-
-    path="/mnt/VegaSlowDataDisk/c3po/Images_aquises/"
-    path='../../../../../DonneesPI/'
-    #chdir(path)
-    folders=['timeLapsePhotos_Pi1_0']
-    liste_image_ref = []
-    liste_name=[]
-    for folder_choose in folders:
-        print(len(liste_image_ref))
-        folder=folder_choose
-        pre_path=path+folder
-        chdir(pre_path)
-        for r, d, f in os.walk(path+folder):
-            for file in f:
-                if '.jpg' in file:
-                    name=basename(join(r, file))
-                    liste_name.append(name)
-                    picture_path=pre_path+"/"+name
-                    liste_image_ref.append(picture_path)
-    return liste_image_ref,liste_name
-"""
 
 def get_liste_image_ref(path):
         liste_image_ref=[]
@@ -324,41 +265,32 @@ def get_liste_image_ref(path):
 
         return liste_image_ref
     
-def get_X_Y(base):
+def get_X_Y(base,path):
     
-    path='../../../../../Pic_dataset/'
-    #Get ref 
-    #liste_name_test,filename_liste=get_liste_name_test(base)
+    #Gather 3c picture in a list
     liste_name_test=list(base["filename"].unique())
     liste_name_test=[path+name for name in liste_name_test]
-    #liste_image_ref,liste_name=get_liste_image_ref(path)
     liste_image_ref=get_liste_image_ref(path)
-    X_img=convert_imagette(liste_name_test) 
+    batch_3C_images=convert_imagette(liste_name_test) 
     
+    #Add 4th chanel depending on the difference pixel by pixel between this image and the previous one. 
     GBR_Diff,HSV_Diff,=make_image_difference(base,liste_image_ref,liste_name_test)
 
-    #Cette étape prend du temps
-    image_4C_liste4=list(map(add_chanel,X_img , GBR_Diff))
+    #This step could take a lot of time
+    image_4C_=list(map(add_chanel,batch_3C_images , GBR_Diff))
     del GBR_Diff,HSV_Diff
-    del X_img
+    del batch_3C_images
     gc.collect()
 
-    
-    #Ici on peut optimiser en créant un dico pour éviter de multiplier les images diff
-    #Il suffirait d'aller voir dans name_test, vérifier que les images ne sont pas en double
-    imagette4C_liste4=to_imagette4C(base,image_4C_liste4)
-    del image_4C_liste4
+    #Concatenate 4th Chanel with the other 3 Chanels
+    imagette4C_liste4=to_imagette4C(base,image_4C_)
+    del image_4C_
     gc.collect()
-    
-    #C'est le X
     X=np.array(imagette4C_liste4)
     del imagette4C_liste4
     gc.collect()
     
-    base["filename"]=liste_name_test
-    Y=get_Y(base)
-    
-    return X,Y,base
+    return X
 
 
 def concatenate_X_Y(X,Y,category,liste_array):
