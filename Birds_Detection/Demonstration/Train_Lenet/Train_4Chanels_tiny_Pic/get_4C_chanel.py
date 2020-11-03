@@ -5,7 +5,7 @@ Created on Wed Oct 14 10:30:46 2020
 
 @author: marcpozzo
 """
-
+#This script add a 4th chanel to the 3 chanels pictures. Tis 4th chanel corresponded to the difference pixel by pixel in Hsv between each pictures containing birds and the previous one.
 
 
 
@@ -29,7 +29,7 @@ print("The 4 chanels correspond to the difference between an image and the image
 print("the difference between the 2 pictures is made in grey colors.")
 print("If you want to apply the conversion of images to gray and the difference that follows type HSV.")
 print("If you want to apply filters before converting to gray, type GBR.")
-type_of_diff=input()
+color_space_diff=input()
 print("Type train or test wethever you want to rec picture with a fourth chanel for train or test sample")
 print( "I advise you to beguin with small proportion to be sure that your computer has enough memory get pictures")
 Sample=input(" Please type train or test " )
@@ -53,12 +53,13 @@ elif Sample=="test":
     del Images,base_train  
 gc.collect()
 
-
+#color_space_diff="BGR"
 
 
 start=time.time()
 #X,Y_train,base_train_trans=fn.get_X_Y(base[:2],diff=type_of_diff)
-X,Y_train,base_train_trans=fn.get_X_Y(base[:2],path)
+X=fn.get_X_Y(base[:2],path,color_space_diff)
+Y=fn.get_Y(base[:2])
 end=time.time()
 print(end-start)
 save('imagettes4C_'+type_of_diff+'_'+Sample +'.npy', X)

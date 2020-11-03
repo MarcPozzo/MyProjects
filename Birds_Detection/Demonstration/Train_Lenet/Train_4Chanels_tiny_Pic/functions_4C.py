@@ -46,8 +46,8 @@ def eliminate_small_categories(df,Minimum_Number_Class):
     return df
 
 
-
-def cc(image,changement):
+#Convert the method of writing a picture (HSV,GBR,RGB) to another
+def convert_color(image,changement):
     if changement=="HSV":
         image=cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
     if changement=="BGRGRAY":
@@ -171,36 +171,36 @@ def get_Y(base):
     return Y
 
 
-def make_image_difference(base,liste_image_ref,liste_name_test):
+def make_image_difference(base,liste_image_ref,liste_name_test,color_space_diff="BGR"):
     Gray_Diff_from_HSV=[]
     Gray_Diff_from_BGR=[]
 
 
-    compteur=0
+    #For all images in the loop get the HSV and GBR diff
     for i in range(len(base)):
-        compteur+=1
-        #print("valeur du compteur",compteur)
-        #name_test=base["filename"].iloc[i]
+        #Open image test containing the birds and the previous one (image_ref)
         name_test=liste_name_test[i]
-        #print("name_test",name_test)
         imageA=cv2.imread(name_test)
-
         index_of_ref=liste_image_ref.index(name_test)-1
         name_ref=liste_image_ref[index_of_ref]
         imageB=cv2.imread(name_ref)
 
-        BGR_Diff = cv2.absdiff(imageA, imageB)
-        BGR_Diff=cc(BGR_Diff,"BGRGRAY")
-        Gray_Diff_from_BGR.append(BGR_Diff)
+        #difference for 3 chanels (BGR) and then convert to GRAY scale
+        if color_space_diff=="BGR":
+            BGR_Diff = cv2.absdiff(imageA, imageB)
+            BGR_Diff=convert_color(BGR_Diff,"BGRGRAY")
+            Gray_Diff_from_BGR.append(BGR_Diff)
 
-        imgAHSV=cc(imageA,"HSV")
-        imgBHSV=cc(imageB,"HSV")
 
-        HSV = cv2.absdiff(imgAHSV, imgBHSV)
-        HSV_Diff = cc(HSV,"BGRGRAY")
-        Gray_Diff_from_HSV.append(HSV_Diff)
+        #Make the difference in HSV method and teg
+        if color_space_diff=="BGR":
+            imgAHSV=convert_color(imageA,"HSV")
+            imgBHSV=convert_color(imageB,"HSV")
+            HSV = cv2.absdiff(imgAHSV, imgBHSV)
+            HSV_Diff = convert_color(HSV,"BGRGRAY")
+            Gray_Diff_from_HSV.append(HSV_Diff)
         
-    return Gray_Diff_from_BGR,Gray_Diff_from_HSV
+    return Gray_Diff_from_HSV
 
 
 
@@ -265,7 +265,7 @@ def get_liste_image_ref(path):
 
         return liste_image_ref
     
-def get_X_Y(base,path):
+def get_X_Y(base,path,color_space_diff):
     
     #Gather 3c picture in a list
     liste_name_test=list(base["filename"].unique())
@@ -274,11 +274,11 @@ def get_X_Y(base,path):
     batch_3C_images=convert_imagette(liste_name_test) 
     
     #Add 4th chanel depending on the difference pixel by pixel between this image and the previous one. 
-    GBR_Diff,HSV_Diff,=make_image_difference(base,liste_image_ref,liste_name_test)
+    GBR_Diff=make_image_difference(base,liste_image_ref,liste_name_test,color_space_diff)
 
     #This step could take a lot of time
     image_4C_=list(map(add_chanel,batch_3C_images , GBR_Diff))
-    del GBR_Diff,HSV_Diff
+    #del GBR_Diff,HSV_Diff
     del batch_3C_images
     gc.collect()
 
