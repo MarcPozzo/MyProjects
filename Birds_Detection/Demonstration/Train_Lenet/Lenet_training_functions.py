@@ -105,8 +105,8 @@ def convert_image(X):
 
 
 #Creation of dictionnary according to generator classes to convert the number labels (0,1,2,3,4,5) to tring labels ("autre","corbeau",....)
-def map_prediction(arg_predict):
-    dictionnaire=train_generator.class_indices
+def map_prediction(arg_predict,generator):
+    dictionnaire=generator.class_indices
     dictionnaire_inv = {v: k for k, v in dictionnaire.items()}
     
     Keys=[]
