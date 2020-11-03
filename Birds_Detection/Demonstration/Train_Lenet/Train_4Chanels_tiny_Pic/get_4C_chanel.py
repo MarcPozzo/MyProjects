@@ -16,7 +16,6 @@ import time
 from sklearn.model_selection import train_test_split
 import gc
 from numpy import save
-from os.path import basename, join
 Mat_path="../../../Materiels/"
 
 image_path='../../../../Pic_dataset/'
@@ -53,15 +52,15 @@ elif Sample=="test":
     del Images,base_train  
 gc.collect()
 
-#color_space_diff="BGR"
+
 
 
 start=time.time()
-#X,Y_train,base_train_trans=fn.get_X_Y(base[:2],diff=type_of_diff)
-X=fn.get_X_Y(base[:2],path,color_space_diff)
+X=fn.get_X(base[:2],path,color_space_diff)
 Y=fn.get_Y(base[:2])
 end=time.time()
 print(end-start)
-save('imagettes4C_'+type_of_diff+'_'+Sample +'.npy', X)
+save('imagettes4C_'+color_space_diff+'_'+Sample +'.npy', X)
+#save('Y'+color_space_diff+'_'+Sample +'.npy', Y)
 gc.collect()
 

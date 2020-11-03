@@ -165,16 +165,15 @@ def to_imagette4C(base,liste4D_diff):
 
 def get_Y(base):
 
-    Y = ImageDataGenerator().flow_from_dataframe(dataframe=base,directory="../../../../Pic_dataset",y_col = "classe")
-    #Y=generator.classes
+    Y = ImageDataGenerator().flow_from_dataframe(dataframe=base,directory="../../../../Pic_dataset",y_col = "classe").classes
+
     
     return Y
 
 
 def make_image_difference(base,liste_image_ref,liste_name_test,color_space_diff="BGR"):
-    Gray_Diff_from_HSV=[]
-    Gray_Diff_from_BGR=[]
 
+    Diff_4C_=[]
 
     #For all images in the loop get the HSV and GBR diff
     for i in range(len(base)):
@@ -189,18 +188,20 @@ def make_image_difference(base,liste_image_ref,liste_name_test,color_space_diff=
         if color_space_diff=="BGR":
             BGR_Diff = cv2.absdiff(imageA, imageB)
             BGR_Diff=convert_color(BGR_Diff,"BGRGRAY")
-            Gray_Diff_from_BGR.append(BGR_Diff)
+            Diff_4C_.append(BGR_Diff)
 
 
         #Make the difference in HSV method and teg
-        if color_space_diff=="BGR":
+        elif color_space_diff=="HSV":
             imgAHSV=convert_color(imageA,"HSV")
             imgBHSV=convert_color(imageB,"HSV")
             HSV = cv2.absdiff(imgAHSV, imgBHSV)
             HSV_Diff = convert_color(HSV,"BGRGRAY")
-            Gray_Diff_from_HSV.append(HSV_Diff)
+            Diff_4C_.append(HSV_Diff)
         
-    return Gray_Diff_from_HSV
+        else:
+            print("Warning you miss type the name of color space difference")
+    return Diff_4C_
 
 
 
@@ -274,10 +275,10 @@ def get_X_Y(base,path,color_space_diff):
     batch_3C_images=convert_imagette(liste_name_test) 
     
     #Add 4th chanel depending on the difference pixel by pixel between this image and the previous one. 
-    GBR_Diff=make_image_difference(base,liste_image_ref,liste_name_test,color_space_diff)
+    Diff_4C_=make_image_difference(base,liste_image_ref,liste_name_test,color_space_diff)
 
     #This step could take a lot of time
-    image_4C_=list(map(add_chanel,batch_3C_images , GBR_Diff))
+    image_4C_=list(map(add_chanel,batch_3C_images , Diff_4C_))
     #del GBR_Diff,HSV_Diff
     del batch_3C_images
     gc.collect()
