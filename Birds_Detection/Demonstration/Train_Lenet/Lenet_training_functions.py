@@ -111,3 +111,22 @@ def map_prediction(arg_predict,generator):
 
     #print(metrics.classification_report(Y_test, Values))
     return Values
+
+#Take a wider image than the annotation
+def dezoom_image(xmin,ymin,xmax,ymax,coef_raise,image):
+    limit_widht=image.shape[0]
+    limit_height=image.shape[1]
+    width=xmax-xmin
+    dev_width=int((coef_raise-1)*(width/2)) #take width deviation
+    length=ymax-ymin
+    dev_length=int(((coef_raise-1)*length/2))
+    xmin-=dev_width
+    xmin=max(0,xmin)
+    xmax+=dev_width
+    xmax=min(xmax,limit_height)
+    ymin-=dev_length
+    ymin=max(0,ymin)
+    ymax+=dev_length
+    ymax=min(ymax,limit_widht)
+    return xmin,ymin,xmax,ymax
+
