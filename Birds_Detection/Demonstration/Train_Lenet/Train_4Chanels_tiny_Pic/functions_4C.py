@@ -266,7 +266,7 @@ def get_liste_image_ref(path):
 
         return liste_image_ref
     
-def get_X_Y(base,path,color_space_diff):
+def get_X(base,path,color_space_diff):
     
     #Gather 3c picture in a list
     liste_name_test=list(base["filename"].unique())
