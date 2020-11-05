@@ -45,7 +45,6 @@ if zoom=="Yes":
 
 
 #Extraction of tiny images
-#for i in range(len(Images)):
 if os.path.exists(tiny_image_path)==True:
     print("Warning Tiny_images already exists ! If you want to generate tiny images, please delete first this folder and then retry." )
 elif os.path.exists(tiny_image_path)==False:    
@@ -56,7 +55,7 @@ elif os.path.exists(tiny_image_path)==False:
         image_name=Images["filename"].iloc[i]
         image=cv2.imread(image_path+image_name)
         if zoom=="Yes":
-            xmin,ymin,xmax,ymax=fn.dezoom_image(xmin,ymin,xmax,ymax,coef_raise,image)
+            xmin,ymin,xmax,ymax=fn.zoom_image(xmin,ymin,xmax,ymax,coef_raise,image)
         tiny_image=image[ymin:ymax,xmin:xmax]
         tiny_image_name=Images['imagetteName'].iloc[i]
         cv2.imwrite(tiny_image_path+tiny_image_name,tiny_image)

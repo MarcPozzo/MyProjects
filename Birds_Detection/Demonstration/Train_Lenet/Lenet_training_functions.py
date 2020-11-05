@@ -5,12 +5,9 @@ Created on Mon Nov  2 16:38:59 2020
 
 @author: marcpozzo
 """
+#
 
-
-
-
-
-
+#Load Libraries
 from keras.models import Sequential # Pour construire un réseau de neurones
 from keras.layers import   MaxPooling2D,Dense, Conv2D,Dropout,Flatten# Pour instancier une couche dense
 import cv2
@@ -21,7 +18,7 @@ import numpy as np
 
 
 
-
+#Eliminate data if the label has not enought occurence
 def eliminate_small_categories(df,Minimum_Number_Class):
     numerous_labels_=[]
     all_labels_=df["classe"].unique()
@@ -32,7 +29,6 @@ def eliminate_small_categories(df,Minimum_Number_Class):
             numerous_labels_.append(i)
 
     less_numerous_labels_=set(all_labels_)-set(numerous_labels_)
-    #print(Non_Utilisable,"Non_Utilisable")
     for i in less_numerous_labels_:
         df=df[df["classe"]!=i] 
 
@@ -40,6 +36,7 @@ def eliminate_small_categories(df,Minimum_Number_Class):
     return df
 
 
+#Bouilf Lenet neural network architectur
 def Lenet_archi(NB_CLASSES,dropout_rate):
     lenet = Sequential()
 
@@ -113,20 +110,22 @@ def map_prediction(arg_predict,generator):
     return Values
 
 #Take a wider image than the annotation
-def dezoom_image(xmin,ymin,xmax,ymax,coef_raise,image):
-    limit_widht=image.shape[0]
+def zoom_image(xmin,ymin,xmax,ymax,coef_raise,image):
+    
+
+    #Change the coordonates x
     limit_height=image.shape[1]
     width=xmax-xmin
     dev_width=int((coef_raise-1)*(width/2)) #take width deviation
+    xmin=max(0,xmin-dev_width)
+    xmax=min(xmax+dev_width,limit_height)
+    
+    #Change the coordonates y
+    limit_widht=image.shape[0]
     length=ymax-ymin
     dev_length=int(((coef_raise-1)*length/2))
-    xmin-=dev_width
-    xmin=max(0,xmin)
-    xmax+=dev_width
-    xmax=min(xmax,limit_height)
-    ymin-=dev_length
-    ymin=max(0,ymin)
-    ymax+=dev_length
-    ymax=min(ymax,limit_widht)
+    ymin=max(0,ymin-dev_length)
+    ymax=min(ymax+dev_length,limit_widht)
+
     return xmin,ymin,xmax,ymax
 
