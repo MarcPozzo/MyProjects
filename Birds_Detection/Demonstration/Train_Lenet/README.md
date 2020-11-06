@@ -8,10 +8,11 @@
 ## Files description
 
 - generate_3C_tiny_images.py : generate tiny images depending of the coordonates in Images tables make sur Tiny_images exits
-- Train_your_tiny_images.ipynb : script allow you to train Lenet with your data and save neural network
+- Train_your_tiny_images.ipynb : script allow you to train Lenet with your data and save neural network as drop_out.50
 - evaluate_Lenet3C_on_tiny_pic.ipynb : display the performance of Lenet corss_tab, precision, recall, ... .
 - Lenet_training_functions.py : contains support functions for previous scripts
-
+- drop_out.50 is a neural network trained in Train_your_tiny_images.ipynb 
+	and Evaluate in evaluate_Lenet3C_on_tiny_pic.ipynb (after evaluating neural network please put it in ../../Materiels/Models)
 
 Train_4th_Chanel_Pic : in this folder we add a 4th chanel to the image and train it, we will explain it soon
 
