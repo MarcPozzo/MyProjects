@@ -6,6 +6,8 @@ Created on Fri Nov 13 08:43:44 2020
 @author: marcpozzo
 """
 
+#This script create a new chanels from the difference of one tiny picture and tiny picture taken juste before.
+
 #Import libraries
 import pandas as pd
 import functions_4C as fn
@@ -14,9 +16,11 @@ import gc
 from numpy import save
 Mat_path="../../../Materiels/"
 
-image_path='../../../../../Pic_dataset/'
-tiny_image_path='../../../../../4C_tiny_picture/'
-
+#Load Table
+#image_path='../../../../../Pic_dataset/'
+tiny_image_path='../../../../../Tiny_images/'
+image_path_to_save='../../../../../4C_tiny_picture/'
+Images=pd.read_csv(Mat_path+"tiny_Images.csv")
 
 
 
@@ -33,11 +37,8 @@ test_size = float(input("Type a number between 0.1 and 0.5 to indicate the propo
 
 
 
-Images=pd.read_csv(Mat_path+"Images.csv")
 
-#set minimum number requirement
-Minimum_Number_Class=int(input("A minimum size popoulation for each labels is required to well analaze dataset. at what amount do you want to set the size limit (100 adviced ?) "))
-Images=fn.eliminate_small_categories(Images,Minimum_Number_Class)
+
 
 
 
@@ -55,9 +56,13 @@ gc.collect()
 
 
 
+new_base=base[:2]
+X=fn.get_X(new_base,tiny_image_path,color_space_diff)
+Y=fn.get_Y(new_base)
 
-X=fn.get_X(base[:2],image_path,color_space_diff)
-Y=fn.get_Y(base[:2])
-save(tiny_image_path+'imagettes4C_'+color_space_diff+'_'+Sample +'.npy', X)
-save(tiny_image_path+'labels4C_'+color_space_diff+'_'+Sample +'.npy', Y)
+for i in range(len(X)):
+    name=new_base["imagetteName"].iloc[i][:-4]
+    save(image_path_to_save+name+color_space_diff+'_'+Sample +'.npy', X[i])
+
+save(image_path_to_save+'labels4C_'+color_space_diff+'_'+Sample +'.npy', Y)
 gc.collect()

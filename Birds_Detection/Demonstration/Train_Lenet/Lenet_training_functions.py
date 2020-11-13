@@ -12,7 +12,8 @@ from keras.models import Sequential # Pour construire un réseau de neurones
 from keras.layers import   MaxPooling2D,Dense, Conv2D,Dropout,Flatten# Pour instancier une couche dense
 import cv2
 import numpy as np
-
+import os
+from os.path import basename, join
 
 
 
@@ -112,20 +113,20 @@ def map_prediction(arg_predict,generator):
 #Take a wider image than the annotation
 def zoom_image(xmin,ymin,xmax,ymax,coef_raise,image):
     
-
-    #Change the coordonates x
-    limit_height=image.shape[1]
-    width=xmax-xmin
-    dev_width=int((coef_raise-1)*(width/2)) #take width deviation
-    xmin=max(0,xmin-dev_width)
-    xmax=min(xmax+dev_width,limit_height)
-    
-    #Change the coordonates y
-    limit_widht=image.shape[0]
-    length=ymax-ymin
-    dev_length=int(((coef_raise-1)*length/2))
-    ymin=max(0,ymin-dev_length)
-    ymax=min(ymax+dev_length,limit_widht)
+    if coef_raise!=1:
+        #Change the coordonates x
+        limit_height=image.shape[1]
+        width=xmax-xmin
+        dev_width=int((coef_raise-1)*(width/2)) #take width deviation
+        xmin=max(0,xmin-dev_width)
+        xmax=min(xmax+dev_width,limit_height)
+        
+        #Change the coordonates y
+        limit_widht=image.shape[0]
+        length=ymax-ymin
+        dev_length=int(((coef_raise-1)*length/2))
+        ymin=max(0,ymin-dev_length)
+        ymax=min(ymax+dev_length,limit_widht)
 
     return xmin,ymin,xmax,ymax
 
@@ -134,38 +135,70 @@ def zoom_image(xmin,ymin,xmax,ymax,coef_raise,image):
 def write_tiny_images(zoom,Images,image_path,coef_raise,tiny_image_path):
     
     
-    if zoom=="Yes":
-        xmin_,ymin_,xmax_,ymax_=[[] for i in range(4)]
+    xmin_,ymin_,xmax_,ymax_=[[] for i in range(4)]
+    
         
-        #Write tiny images with the zoom choosen
-        for i in range(len(Images)):
-            xmin,ymin,xmax,ymax=Images[['xmin', 'ymin', 'xmax', 'ymax']].iloc[i]
-            image_name=Images["filename"].iloc[i]
-            image=cv2.imread(image_path+image_name)
-            xmin,ymin,xmax,ymax=zoom_image(xmin,ymin,xmax,ymax,coef_raise,image)
-            tiny_image=image[ymin:ymax,xmin:xmax]
-            tiny_image_name=Images['imagetteName'].iloc[i]
-            cv2.imwrite(tiny_image_path+tiny_image_name,tiny_image)
+    #Write tiny images with the zoom choosen
+    for i in range(len(Images)):
+        xmin,ymin,xmax,ymax=Images[['xmin', 'ymin', 'xmax', 'ymax']].iloc[i]
+        image_name=Images["filename"].iloc[i]
+        image=cv2.imread(image_path+image_name)
+        xmin,ymin,xmax,ymax=zoom_image(xmin,ymin,xmax,ymax,coef_raise,image)
+        tiny_image=image[ymin:ymax,xmin:xmax]
+        tiny_image_name=Images['imagetteName'].iloc[i]
+        cv2.imwrite(tiny_image_path+tiny_image_name,tiny_image)
             
-            #Save new coordonates with the zoom applied
-            xmin_.append(xmin)
-            ymin_.append(ymin)
-            xmax_.append(xmax)
-            ymax_.append(ymax)
+        #Save new coordonates with the zoom applied
+        xmin_.append(xmin)
+        ymin_.append(ymin)
+        xmax_.append(xmax)
+        ymax_.append(ymax)
+        
+    #Incorparate the new coordonates id if necessary
+    if coef_raise!=1:
         Images["xmin"]=xmin_
         Images["xmax"]=xmax_
         Images["ymin"]=ymin_
         Images["ymax"]=ymax_
         
             
-    else:  
-        #Write tiny images
-        for i in range(len(Images)):
-            xmin,ymin,xmax,ymax=Images[['xmin', 'ymin', 'xmax', 'ymax']].iloc[i]
-            image_name=Images["filename"].iloc[i]
-            image=cv2.imread(image_path+image_name)
-            tiny_image=image[ymin:ymax,xmin:xmax]
-            tiny_image_name=Images['imagetteName'].iloc[i]
-            cv2.imwrite(tiny_image_path+tiny_image_name,tiny_image)
+
             
     return Images
+
+
+#get all pictures in a path
+def get_liste_image_ref(path,string='.JPG'):
+        liste_image_ref=[]
+        #image_path='../../../../../Pic_dataset/'
+        #chdir(image_path)
+        for r, d, f in os.walk(path):
+            for file in f:
+                #print(file)
+                if string in file:
+                    name=basename(join(r, file))
+                    #liste_name.append(name)
+                    picture_path=path+name
+                    liste_image_ref.append(picture_path)
+
+        return liste_image_ref
+
+
+#write tiny images ref depending of the zoom chosen 
+def write_tiny_ref_images(zoom,Images,image_path,coef_raise,tiny_image_path):
+    
+    liste_name_ref=get_liste_image_ref(image_path,string='.jpg')        
+        
+    #Write tiny images with the zoom choosen
+    for i in range(len(Images)):
+        xmin,ymin,xmax,ymax=Images[['xmin', 'ymin', 'xmax', 'ymax']].iloc[i]
+        image_name=Images["filename"].iloc[i]
+        full_image_name=image_path+image_name
+        index_number_image=liste_name_ref.index(full_image_name)-1
+        image_ref=liste_name_ref[index_number_image]
+        image=cv2.imread(image_ref)
+        xmin,ymin,xmax,ymax=zoom_image(xmin,ymin,xmax,ymax,coef_raise,image)
+        tiny_image_ref=image[ymin:ymax,xmin:xmax]
+        tiny_image_name=Images['imagetteName'].iloc[i]
+        cv2.imwrite(tiny_image_path+tiny_image_name,tiny_image_ref)
+            

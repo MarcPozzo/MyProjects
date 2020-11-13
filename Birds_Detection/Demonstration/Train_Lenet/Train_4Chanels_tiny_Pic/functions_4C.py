@@ -252,16 +252,17 @@ def get_liste_name_test(base):
     return liste_name_test,filename_liste
 
 
-def get_liste_image_ref(path):
+def get_liste_image_ref(path,string='.JPG'):
         liste_image_ref=[]
-        image_path='../../../../../Pic_dataset/'
+        #image_path='../../../../../Pic_dataset/'
         #chdir(image_path)
-        for r, d, f in os.walk(image_path):
+        for r, d, f in os.walk(path):
             for file in f:
-                if '.jpg' in file:
+                #print(file)
+                if string in file:
                     name=basename(join(r, file))
                     #liste_name.append(name)
-                    picture_path=image_path+name
+                    picture_path=path+name
                     liste_image_ref.append(picture_path)
 
         return liste_image_ref
@@ -269,7 +270,7 @@ def get_liste_image_ref(path):
 def get_X(base,path,color_space_diff):
     
     #Gather 3c picture in a list
-    liste_name_test=list(base["filename"].unique())
+    liste_name_test=list(base["imagetteName"].unique())
     liste_name_test=[path+name for name in liste_name_test]
     liste_image_ref=get_liste_image_ref(path)
     batch_3C_images=convert_imagette(liste_name_test) 

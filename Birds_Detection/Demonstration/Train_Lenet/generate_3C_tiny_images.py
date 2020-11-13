@@ -14,6 +14,7 @@ import Lenet_training_functions as fn
 
 image_path='../../../../Pic_dataset/'
 tiny_image_path='../../../../Tiny_images/'
+tiny_image_ref_path='../../../../Tiny_images_ref/'
 Mat_path="../../Materiels/"
 zoom=False
 coef_raise=1
@@ -51,3 +52,11 @@ elif os.path.exists(tiny_image_path)==False:
     Images=fn.write_tiny_images(zoom,Images,image_path,coef_raise,tiny_image_path)
     print("Tiny_images.csv is generated")
     Images.to_csv(Mat_path+"Tiny_images.csv",index=False)
+    
+tiny_image_ref=input("If you want to run the 4 chanels model you need the tiny images for the images ref. In this case type Yes: ")
+
+if tiny_image_ref=="Yes":
+    os.mkdir(tiny_image_ref_path)
+    fn.write_tiny_ref_images(zoom,Images,image_path,coef_raise,tiny_image_ref_path)
+    
+    
