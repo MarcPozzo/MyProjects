@@ -20,7 +20,7 @@ Train_4th_Chanel_Pic : in this folder we add a 4th chanel to the image and train
 
 - The objects must be annotated in a csv file according to their class and their location in the image. 
 - Refer to the csv file to see the information that the DataFrame should contain.
-- Your images are in a file outside the directory called 'Pic_dataset/' tel qu'il se trouve '../../../../Pic_dataset/'
+- Your images are in a file outside the directory called 'Pic_dataset/' this folder must be at '../../../../Pic_dataset/'
 - libraries to load : pandas=0.25.3, cv2=3.4.2
 
 

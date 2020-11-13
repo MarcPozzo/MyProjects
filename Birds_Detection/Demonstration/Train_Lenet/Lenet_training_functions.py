@@ -129,3 +129,43 @@ def zoom_image(xmin,ymin,xmax,ymax,coef_raise,image):
 
     return xmin,ymin,xmax,ymax
 
+
+#write tiny images depending of the zoom chosen 
+def write_tiny_images(zoom,Images,image_path,coef_raise,tiny_image_path):
+    
+    
+    if zoom=="Yes":
+        xmin_,ymin_,xmax_,ymax_=[[] for i in range(4)]
+        
+        #Write tiny images with the zoom choosen
+        for i in range(len(Images)):
+            xmin,ymin,xmax,ymax=Images[['xmin', 'ymin', 'xmax', 'ymax']].iloc[i]
+            image_name=Images["filename"].iloc[i]
+            image=cv2.imread(image_path+image_name)
+            xmin,ymin,xmax,ymax=zoom_image(xmin,ymin,xmax,ymax,coef_raise,image)
+            tiny_image=image[ymin:ymax,xmin:xmax]
+            tiny_image_name=Images['imagetteName'].iloc[i]
+            cv2.imwrite(tiny_image_path+tiny_image_name,tiny_image)
+            
+            #Save new coordonates with the zoom applied
+            xmin_.append(xmin)
+            ymin_.append(ymin)
+            xmax_.append(xmax)
+            ymax_.append(ymax)
+        Images["xmin"]=xmin_
+        Images["xmax"]=xmax_
+        Images["ymin"]=ymin_
+        Images["ymax"]=ymax_
+        
+            
+    else:  
+        #Write tiny images
+        for i in range(len(Images)):
+            xmin,ymin,xmax,ymax=Images[['xmin', 'ymin', 'xmax', 'ymax']].iloc[i]
+            image_name=Images["filename"].iloc[i]
+            image=cv2.imread(image_path+image_name)
+            tiny_image=image[ymin:ymax,xmin:xmax]
+            tiny_image_name=Images['imagetteName'].iloc[i]
+            cv2.imwrite(tiny_image_path+tiny_image_name,tiny_image)
+            
+    return Images
