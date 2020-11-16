@@ -10,7 +10,6 @@ Created on Wed Oct 14 10:07:35 2020
 
 import ast
 import os
-from os import chdir
 from os.path import basename, join
 import cv2
 import pandas as pd
@@ -60,7 +59,7 @@ def convert_color(image,changement):
     return image
 
 
-
+#Lenet architecture
 def nn(dropout_rate=0.2):    
     
     lenet = Sequential()
@@ -110,6 +109,7 @@ def nn(dropout_rate=0.2):
     
     return lenet
 
+
 #Gather images in a unique array
 def convert_imagette(X):
     images_=[]
@@ -128,7 +128,7 @@ def convert_imagette(X):
 
 
 
-
+#Add a 4th chanel to 3 exesting chanels from the pictures
 def add_chanel(image,ar_in_liste_diff):
 
     b_channel, g_channel, r_channel = cv2.split(image)
@@ -141,32 +141,7 @@ def add_chanel(image,ar_in_liste_diff):
 
 
 
-
-
-def to_imagette4C(base,liste4D_diff):
-    
-    if len(base)!=len(liste4D_diff):
-        print("la table de données et la liste ne font pas la même taille")
-    imagette4C_liste4=[]
-    
-
-    for i in range(len(liste4D_diff)):
-        """"
-        image_4C_entire=liste4D_diff[i]
-        x_min=base["xmin"].iloc[i]
-        x_max=base["xmax"].iloc[i]
-        y_min=base["ymin"].iloc[i]
-        y_max=base["ymax"].iloc[i]
-
-        imagette=image_4C_entire[y_min:y_max,x_min:x_max]
-        """
-        
-        imagette=cv2.resize(liste4D_diff[i],(28,28))
-        imagette4C_liste4.append(imagette)
-        
-    return imagette4C_liste4
-
-
+#Get labels for each pictures
 def get_Y(base):
 
     Y = ImageDataGenerator().flow_from_dataframe(dataframe=base,directory="../../../../../Pic_dataset",y_col = "classe").classes
@@ -174,69 +149,22 @@ def get_Y(base):
     
     return Y
 
-#index_of_ref=liste_name_test.index(name_test)
-#name_ref=liste_image_ref[index_of_ref]
-
-"""  
-#Remplacer par name_ref=liste_image_ref[i]
-def make_image_difference(base,path_timage_ref_,path_timage_test_,color_space_diff="BGR"):
-
-    Diff_4C_=[]
-    
-    #For all images in the loop get the HSV and GBR diff
-    for i in range(len(base)):
-        #Open image test containing the birds and the previous one (image_ref)
-        name_test=path_timage_test_[i]
-        imageA=cv2.imread(name_test)
-        index_of_ref=path_timage_test_.index(name_test)
-        name_ref=path_timage_ref_[index_of_ref]
-        imageB=cv2.imread(name_ref)
-
-        #difference for 3 chanels (BGR) and then convert to GRAY scale
-        if color_space_diff=="BGR":
-            BGR_Diff = cv2.absdiff(imageA, imageB)
-            BGR_Diff=convert_color(BGR_Diff,"BGRGRAY")
-            Diff_4C_.append(BGR_Diff)
 
 
-        #Make the difference in HSV method and teg
-        elif color_space_diff=="HSV":
-            imgAHSV=convert_color(imageA,"HSV")
-            imgBHSV=convert_color(imageB,"HSV")
-            HSV = cv2.absdiff(imgAHSV, imgBHSV)
-            HSV_Diff = convert_color(HSV,"BGRGRAY")
-            Diff_4C_.append(HSV_Diff)
-        
-        else:
-            print("Warning you miss type the name of color space difference")
-    return Diff_4C_
-"""
 
 
-#Remplacer par name_ref=liste_image_ref[i]
+# substract images and return the difference array 
 def make_image_difference(base,tiny_image_path,color_space_diff="BGR"):
 
-    Diff_4C_=[]
-    
-    
-    test_path=tiny_image_path+"Images_test/"
-    ref_path=tiny_image_path+"Images_ref/"
-    
-    #Gather 3c picture in a list
-    #tpicture_names_=list(base["imagetteName"].unique())
-    #path_timage_test_=[test_path+name for name in tpicture_names_]
-    #path_timage_ref_=[ref_path+name for name in tpicture_names_]
+    Diff_4C_=[] #list gatehring the 4th chanel for every tiny images
+
+
     
     #For all images in the loop get the HSV and GBR diff
+    test_path=tiny_image_path+"Images_test/"
+    ref_path=tiny_image_path+"Images_ref/"
     for i in range(len(base)):
         #Open image test containing the birds and the previous one (image_ref)
-        """
-        name_test=path_timage_test_[i]
-        imageA=cv2.imread(name_test)
-        index_of_ref=path_timage_test_.index(name_test)
-        name_ref=path_timage_ref_[index_of_ref]
-        imageB=cv2.imread(name_ref)
-        """
         name_tpic=base["imagetteName"].iloc[i]
         name_test=test_path+name_tpic
         name_ref=ref_path+name_tpic
@@ -329,13 +257,13 @@ def get_liste_image_ref(path,string='.JPG'):
     
 def get_X(base,tiny_image_path,color_space_diff):
     
-
+   
+    #Gather tiny images in a list
     test_path=tiny_image_path+"Images_test/"
-    
-    #Gather 3c picture in a list
     tpicture_names_=list(base["imagetteName"].unique()) #tiny picture names
     path_timage_test_=[test_path+name for name in tpicture_names_]
     
+    #Gather 3c picture in a list
     timages_3C_=[] #tiny images with 3 chanels
     for image_path in path_timage_test_:
         img=cv2.imread(image_path)
