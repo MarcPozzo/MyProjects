@@ -50,24 +50,22 @@ if os.path.exists(tiny_image_path)==True:
 elif os.path.exists(tiny_image_path)==False: 
     os.mkdir(tiny_image_path)
     
+    #generate ref images
+    tiny_image_ref=input("If you want to run the 4 chanels model you need the tiny images for the images ref. In this case type Yes: ")
+    if tiny_image_ref=="Yes":
+        os.mkdir(tiny_image_ref_path)
+        print("Please Wait your tiny images for reference set are written")
+        fn.write_tiny_ref_images(zoom,Images,image_path,coef_raise,tiny_image_ref_path)
+        os.mkdir(tiny_image_ref_path)
+        print("Please Wait your tiny images for reference set are written")
+        fn.write_tiny_ref_images(zoom,Images,image_path,coef_raise,tiny_image_ref_path)
     
-    os.mkdir(tiny_image_ref_path)
-    print("Please Wait your tiny images for reference set are written")
-    fn.write_tiny_ref_images(zoom,Images,image_path,coef_raise,tiny_image_ref_path)
-    
-    
+    #generate test images
     os.mkdir(tiny_image_test_path)
     print("Please Wait your tiny images for test set are written")
     Images=fn.write_tiny_images(zoom,Images,image_path,coef_raise,tiny_image_test_path)
     print("Tiny_images.csv is generated")
     Images.to_csv(Mat_path+"Tiny_images.csv",index=False)
 
-"""    
-tiny_image_ref=input("If you want to run the 4 chanels model you need the tiny images for the images ref. In this case type Yes: ")
 
-if tiny_image_ref=="Yes":
-    os.mkdir(tiny_image_ref_path)
-    print("Please Wait your tiny images for reference set are written")
-    fn.write_tiny_ref_images(zoom,Images,image_path,coef_raise,tiny_image_ref_path)
-"""    
     

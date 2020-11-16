@@ -174,19 +174,21 @@ def get_Y(base):
     
     return Y
 
-
-def make_image_difference(base,liste_image_ref,liste_name_test,color_space_diff="BGR"):
+#index_of_ref=liste_name_test.index(name_test)
+#name_ref=liste_image_ref[index_of_ref]
+    
+#Remplacer par name_ref=liste_image_ref[i]
+def make_image_difference(base,path_timage_ref_,path_timage_test_,color_space_diff="BGR"):
 
     Diff_4C_=[]
 
     #For all images in the loop get the HSV and GBR diff
     for i in range(len(base)):
         #Open image test containing the birds and the previous one (image_ref)
-        name_test=liste_name_test[i]
+        name_test=path_timage_test_[i]
         imageA=cv2.imread(name_test)
-        #index_of_ref=liste_image_ref.index(name_test)-1
-        index_of_ref=liste_name_test.index(name_test)
-        name_ref=liste_image_ref[index_of_ref]
+        index_of_ref=path_timage_test_.index(name_test)
+        name_ref=path_timage_ref_[index_of_ref]
         imageB=cv2.imread(name_ref)
 
         #difference for 3 chanels (BGR) and then convert to GRAY scale
@@ -274,23 +276,22 @@ def get_liste_image_ref(path,string='.JPG'):
     
 def get_X(base,tiny_image_path,color_space_diff):
     
-    print("point de contrôle0")
+
     test_path=tiny_image_path+"Images_test/"
     ref_path=tiny_image_path+"Images_ref/"
+    
     #Gather 3c picture in a list
     liste_name=list(base["imagetteName"].unique())
-    liste_name_test=[test_path+name for name in liste_name]
-    liste_image_ref=[ref_path+name for name in liste_name]
-    #liste_image_ref=get_liste_image_ref(tiny_image_path)
-    batch_3C_images=convert_imagette(liste_name_test) 
+    path_timage_test_=[test_path+name for name in liste_name]
+    path_timage_ref_=[ref_path+name for name in liste_name]
+    batch_3C_images=convert_imagette(path_timage_test_) 
     
     #Add 4th chanel depending on the difference pixel by pixel between this image and the previous one. 
-    Diff_4C_=make_image_difference(base,liste_image_ref,liste_name_test,color_space_diff)
-    #Diff_4C_=make_image_difference(base,ref_path,test_path,color_space_diff)
-    print("point de contrôle1")
+    Chanel_4_=make_image_difference(base,path_timage_ref_,path_timage_test_,color_space_diff) #Chanels obtain with the difference of images
+   
+  
     #This step could take a lot of time
-    image_4C_=list(map(add_chanel,batch_3C_images , Diff_4C_))
-    #del GBR_Diff,HSV_Diff
+    image_4C_=list(map(add_chanel,batch_3C_images , Chanel_4_))
     del batch_3C_images
     gc.collect()
 
