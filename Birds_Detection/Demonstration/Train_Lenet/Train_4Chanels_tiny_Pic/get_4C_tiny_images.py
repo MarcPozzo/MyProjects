@@ -56,7 +56,7 @@ gc.collect()
 
 
 
-new_base=base[:2]
+new_base=base
 X=fn.get_X(new_base,tiny_image_path,color_space_diff)
 Y=fn.get_Y(new_base)
 

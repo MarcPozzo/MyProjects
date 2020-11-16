@@ -151,6 +151,7 @@ def to_imagette4C(base,liste4D_diff):
     
 
     for i in range(len(liste4D_diff)):
+        """"
         image_4C_entire=liste4D_diff[i]
         x_min=base["xmin"].iloc[i]
         x_max=base["xmax"].iloc[i]
@@ -158,7 +159,9 @@ def to_imagette4C(base,liste4D_diff):
         y_max=base["ymax"].iloc[i]
 
         imagette=image_4C_entire[y_min:y_max,x_min:x_max]
-        imagette=cv2.resize(imagette,(28,28))
+        """
+        
+        imagette=cv2.resize(liste4D_diff[i],(28,28))
         imagette4C_liste4.append(imagette)
         
     return imagette4C_liste4
@@ -181,7 +184,8 @@ def make_image_difference(base,liste_image_ref,liste_name_test,color_space_diff=
         #Open image test containing the birds and the previous one (image_ref)
         name_test=liste_name_test[i]
         imageA=cv2.imread(name_test)
-        index_of_ref=liste_image_ref.index(name_test)-1
+        #index_of_ref=liste_image_ref.index(name_test)-1
+        index_of_ref=liste_name_test.index(name_test)
         name_ref=liste_image_ref[index_of_ref]
         imageB=cv2.imread(name_ref)
 
@@ -270,15 +274,20 @@ def get_liste_image_ref(path,string='.JPG'):
     
 def get_X(base,tiny_image_path,color_space_diff):
     
+    print("point de contrôle0")
+    test_path=tiny_image_path+"Images_test/"
+    ref_path=tiny_image_path+"Images_ref/"
     #Gather 3c picture in a list
-    liste_name_test=list(base["imagetteName"].unique())
-    liste_name_test=[tiny_image_path+name for name in liste_name_test]
-    liste_image_ref=get_liste_image_ref(tiny_image_path)
+    liste_name=list(base["imagetteName"].unique())
+    liste_name_test=[test_path+name for name in liste_name]
+    liste_image_ref=[ref_path+name for name in liste_name]
+    #liste_image_ref=get_liste_image_ref(tiny_image_path)
     batch_3C_images=convert_imagette(liste_name_test) 
     
     #Add 4th chanel depending on the difference pixel by pixel between this image and the previous one. 
     Diff_4C_=make_image_difference(base,liste_image_ref,liste_name_test,color_space_diff)
-
+    #Diff_4C_=make_image_difference(base,ref_path,test_path,color_space_diff)
+    print("point de contrôle1")
     #This step could take a lot of time
     image_4C_=list(map(add_chanel,batch_3C_images , Diff_4C_))
     #del GBR_Diff,HSV_Diff
