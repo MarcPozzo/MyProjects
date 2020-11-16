@@ -117,7 +117,7 @@ def convert_imagette(X):
         # Load image
         img=cv2.imread(image)
         images_.append(img[...,::-1])
-        batch_images=np.array(images_)
+    batch_images=np.array(images_)
     return batch_images
 
 
@@ -176,12 +176,13 @@ def get_Y(base):
 
 #index_of_ref=liste_name_test.index(name_test)
 #name_ref=liste_image_ref[index_of_ref]
-    
+
+"""  
 #Remplacer par name_ref=liste_image_ref[i]
 def make_image_difference(base,path_timage_ref_,path_timage_test_,color_space_diff="BGR"):
 
     Diff_4C_=[]
-
+    
     #For all images in the loop get the HSV and GBR diff
     for i in range(len(base)):
         #Open image test containing the birds and the previous one (image_ref)
@@ -209,7 +210,59 @@ def make_image_difference(base,path_timage_ref_,path_timage_test_,color_space_di
         else:
             print("Warning you miss type the name of color space difference")
     return Diff_4C_
+"""
 
+
+#Remplacer par name_ref=liste_image_ref[i]
+def make_image_difference(base,tiny_image_path,color_space_diff="BGR"):
+
+    Diff_4C_=[]
+    
+    
+    test_path=tiny_image_path+"Images_test/"
+    ref_path=tiny_image_path+"Images_ref/"
+    
+    #Gather 3c picture in a list
+    #tpicture_names_=list(base["imagetteName"].unique())
+    #path_timage_test_=[test_path+name for name in tpicture_names_]
+    #path_timage_ref_=[ref_path+name for name in tpicture_names_]
+    
+    #For all images in the loop get the HSV and GBR diff
+    for i in range(len(base)):
+        #Open image test containing the birds and the previous one (image_ref)
+        """
+        name_test=path_timage_test_[i]
+        imageA=cv2.imread(name_test)
+        index_of_ref=path_timage_test_.index(name_test)
+        name_ref=path_timage_ref_[index_of_ref]
+        imageB=cv2.imread(name_ref)
+        """
+        name_tpic=base["imagetteName"].iloc[i]
+        name_test=test_path+name_tpic
+        name_ref=ref_path+name_tpic
+        imageA=cv2.imread(name_test)
+        imageB=cv2.imread(name_ref)
+        
+        #difference for 3 chanels (BGR) and then convert to GRAY scale
+        if color_space_diff=="BGR":
+            BGR_Diff = cv2.absdiff(imageA, imageB)
+            BGR_Diff=convert_color(BGR_Diff,"BGRGRAY")
+            BGR_Diff=cv2.resize(BGR_Diff,(28,28))
+            Diff_4C_.append(BGR_Diff)
+
+
+        #Make the difference in HSV method and teg
+        elif color_space_diff=="HSV":
+            imgAHSV=convert_color(imageA,"HSV")
+            imgBHSV=convert_color(imageB,"HSV")
+            HSV = cv2.absdiff(imgAHSV, imgBHSV)
+            HSV_Diff = convert_color(HSV,"BGRGRAY")
+            HSV_Diff=cv2.resize(HSV_Diff,(28,28))
+            Diff_4C_.append(HSV_Diff)
+        
+        else:
+            print("Warning you miss type the name of color space difference")
+    return Diff_4C_
 
 
 
@@ -278,30 +331,33 @@ def get_X(base,tiny_image_path,color_space_diff):
     
 
     test_path=tiny_image_path+"Images_test/"
-    ref_path=tiny_image_path+"Images_ref/"
     
     #Gather 3c picture in a list
-    liste_name=list(base["imagetteName"].unique())
-    path_timage_test_=[test_path+name for name in liste_name]
-    path_timage_ref_=[ref_path+name for name in liste_name]
-    batch_3C_images=convert_imagette(path_timage_test_) 
+    tpicture_names_=list(base["imagetteName"].unique()) #tiny picture names
+    path_timage_test_=[test_path+name for name in tpicture_names_]
     
+    timages_3C_=[] #tiny images with 3 chanels
+    for image_path in path_timage_test_:
+        img=cv2.imread(image_path)
+        img=cv2.resize(img,(28,28))
+        timages_3C_.append(img)
+
     #Add 4th chanel depending on the difference pixel by pixel between this image and the previous one. 
-    Chanel_4_=make_image_difference(base,path_timage_ref_,path_timage_test_,color_space_diff) #Chanels obtain with the difference of images
+    chanel_4_=make_image_difference(base,tiny_image_path,color_space_diff) #Chanels obtain with the difference of images
    
   
-    #This step could take a lot of time
-    image_4C_=list(map(add_chanel,batch_3C_images , Chanel_4_))
-    del batch_3C_images
+    #Concatenate 4th Chanel with the other 3 Chanels in a single array
+    timages_4C_=list(map(add_chanel,timages_3C_ , chanel_4_))
+    del timages_3C_
+    gc.collect()
+    X=np.array(timages_4C_)
+    
+    
+    del timages_4C_
     gc.collect()
 
-    #Concatenate 4th Chanel with the other 3 Chanels
-    imagette4C_liste4=to_imagette4C(base,image_4C_)
-    del image_4C_
-    gc.collect()
-    X=np.array(imagette4C_liste4)
-    del imagette4C_liste4
-    gc.collect()
+    
+ 
     
     return X
 
