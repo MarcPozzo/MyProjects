@@ -6,6 +6,7 @@ Created on Wed Oct 14 10:07:35 2020
 @author: marcpozzo
 """
 
+#This script gathers the functions used in the other script of this folder
 
 import ast
 import os
@@ -267,12 +268,12 @@ def get_liste_image_ref(path,string='.JPG'):
 
         return liste_image_ref
     
-def get_X(base,path,color_space_diff):
+def get_X(base,tiny_image_path,color_space_diff):
     
     #Gather 3c picture in a list
     liste_name_test=list(base["imagetteName"].unique())
-    liste_name_test=[path+name for name in liste_name_test]
-    liste_image_ref=get_liste_image_ref(path)
+    liste_name_test=[tiny_image_path+name for name in liste_name_test]
+    liste_image_ref=get_liste_image_ref(tiny_image_path)
     batch_3C_images=convert_imagette(liste_name_test) 
     
     #Add 4th chanel depending on the difference pixel by pixel between this image and the previous one. 

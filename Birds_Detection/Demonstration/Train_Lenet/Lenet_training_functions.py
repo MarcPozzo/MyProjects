@@ -5,7 +5,7 @@ Created on Mon Nov  2 16:38:59 2020
 
 @author: marcpozzo
 """
-#
+#This script gathers the functions used in the other script of this folder
 
 #Load Libraries
 from keras.models import Sequential # Pour construire un réseau de neurones
