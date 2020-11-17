@@ -1,15 +1,32 @@
-This folder gathers the sump up of essential scripts
+# Training of tiny images of 3 chanels with Lenet Neural Network
 
-For all original images where we see an animal we annote this picture and extract a smaller image containing only the animal called "annoted imagette".
-In the future an image refers to the image in the original format and imagette regers to an area (from annotation or not) extract from a bigger image. 
-The first amout of data comes from "anoted imagettes". Then we will generate new imagettes thanks to birds recognition system. 
+## Introduction
+
+- Les images entières peuvent contenir des objets de petites taille à identifier, l'objectif de cette section est d'extraire ces objets à identifier en une base de données de petites images
+- L'algorithme Lenet est ensuite entraîné sur cette base, puis évalué. 
 
 
-#Train_Lenet : training of Lenet neural networks for 3d chanels or with an additionnal chanel for the tempory dimensions 
-	on annoted images or images caught (false or trup positive in previous models)
+## Files description
 
-Transfer_learning_VGG16 : load pre-trained weights of VGG16 and keep the last layer which is train with rf,lr,tree ... .
+- generate_3C_tiny_images.py : generate tiny images depending of the coordonates in Images tables make sur Tiny_images exits
+- Train_your_tiny_images.ipynb: script allow you to train Lenet with your data and save neural network
+- evaluate_Lenet3C_on_tiny_pic.ipynb: display the performance of Lenet corss_tab, precision, recall, ... .
+- Lenet_training_functions.py contient les fonctions supports pour les scripts précédendants
 
-Test_Lenet_VGG : script to evaluation neural networks trainned with VGG16 or Lenet architecture directly on pictures. 
 
-Train_evaluate_YoloV2 : train YoloV2 on images and then evaluate directly in image.
+Train_4th_Chanel_Pic : in this folder we add a 4th chanel to the image and train it, we will explain it soon
+
+## Requirement
+
+- Les objets doivent être annotés dans un fichier csv selon leur classe et leur emplacement dans l'image. Se référer au fichier csv pour voir les informations que la DataFrame doit contenir.
+- Vos images se trouvent dans un fichier à l'exterieur du répertoire s'appellant data_pic
+- libraries : X,X
+
+
+## Instruction
+- type python3 generate_3C_tiny_images.py to generate tiny images
+- then train your tiny images with Train_your_tiny_images_in_progress.ipynb
+- finaly evaluate the performances of your neural network with evaluate_Lenet3C_on_tiny_pic
+
+## Note
+- please feel free to change any parameters as your conviniance.
