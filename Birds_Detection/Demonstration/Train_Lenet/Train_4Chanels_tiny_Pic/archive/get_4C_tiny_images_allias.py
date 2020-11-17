@@ -1,18 +1,28 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
+Created on Tue Nov 17 09:55:46 2020
+
+@author: marcpozzo
+"""
+
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
 Created on Fri Nov 13 08:43:44 2020
 
 @author: marcpozzo
 """
 
+#This script was moved keep attention to change the path ....
 #This script create a new chanels from the difference of one tiny picture and tiny picture taken juste before.
 
 #Import libraries
 import pandas as pd
 import functions_4C as fn
 from sklearn.model_selection import train_test_split
-
+import gc
+import os
 from numpy import save
 Mat_path="../../../Materiels/"
 
@@ -29,7 +39,8 @@ print("the difference between the 2 pictures is made in grey colors.")
 print("If you want to apply the conversion of images to gray and the difference that follows type HSV.")
 print("If you want to apply filters before converting to gray, type BGR.")
 color_space_diff=input("Please type HSV or BGR ")
-
+image_path_to_save=image_path_to_save+color_space_diff+"/"
+os.mkdir(image_path_to_save)
 print("Type train or test wethever you want to rec picture with a fourth chanel for train or test sample")
 print( "I advise you to beguin with small proportion to be sure that your computer has enough memory get pictures")
 
@@ -38,18 +49,39 @@ test_size = float(input("Type a number between 0.1 and 0.5 to indicate the propo
 
 
 
+
+
+
+
+
+Sample=input(" Please type train or test " )
+base_train,base_test= train_test_split(Images,stratify=Images["classe"], test_size=test_size,random_state=42)
+if Sample=="train":
+    base=base_train
+    del Images,base_test
+elif Sample=="test":
+    base=base_test
+    del Images,base_train 
+else:
+    print("The 4th pictures weren't generated because you didin't type train or test (in lower case). Pleas try again")
+gc.collect()
+
+
+
+
+
 base_train,base_test= train_test_split(Images,stratify=Images["classe"], test_size=test_size,random_state=42)
 
-X_train=fn.get_X(base_train,tiny_image_path,color_space_diff)
-Y_train=fn.get_Y(base_train)
-save(image_path_to_save+color_space_diff+'timages4C_train.npy', X_train)
-save(image_path_to_save+color_space_diff+'labels_train.npy', Y_train)
-
-X_test=fn.get_X(base_test,tiny_image_path,color_space_diff)
-Y_test=fn.get_Y(base_test)
-save(image_path_to_save+color_space_diff+'timages4C_test.npy', X_test)
-save(image_path_to_save+color_space_diff+'labels_test.npy', Y_test)
-print("data were saved in",image_path_to_save)
+X=fn.get_X(base,tiny_image_path,color_space_diff)
+Y=fn.get_Y(base)
 
 
 
+
+
+for i in range(len(X)):
+    name=base["imagetteName"].iloc[i][:-4]
+    save(image_path_to_save+name+color_space_diff+'_'+Sample +'.npy', X[i])
+
+save(image_path_to_save+'labels4C_'+color_space_diff+'_'+Sample +'.npy', Y)
+gc.collect()
