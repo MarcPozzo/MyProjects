@@ -14,7 +14,7 @@
 - drop_out.50 is a neural network trained in Train_your_tiny_images.ipynb 
 	and Evaluate in evaluate_Lenet3C_on_tiny_pic.ipynb (after evaluating neural network please put it in ../../Materiels/Models)
 
-Train_4th_Chanel_Pic : in this folder we add a 4th chanel to the image and train it, we will explain it soon
+Train_4th_Chanel_Pic : in this folder we add a 4th chanel to the image and train it.
 
 ## Requirement
 
@@ -27,7 +27,7 @@ Train_4th_Chanel_Pic : in this folder we add a 4th chanel to the image and train
 ## Instruction
 
 - Type python3 generate_3C_tiny_images.py to generate tiny images eventually with a zoom or a dezoom
-- Then train your tiny images with Train_your_tiny_images_in_progress.ipynb file
+- Then train your tiny images with Train_your_tiny_images.ipynb file
 - Finaly evaluate the performances of your neural network with evaluate_Lenet3C_on_tiny_pic.ipynb file
 
 ## Note
