@@ -114,25 +114,22 @@ def Evaluate_Lenet_prediction ( Images , name_test , name_ref  , CNNmodel , maxA
 
 
 #Prediction
-def Evaluate_extraction ( Images , name_test , name_ref  , CNNmodel , maxAnalDL ,data_path , 
-                       filtre_choice = "No_filtre" ,down_thresh = 25 ,
-                      chanels = 3 , numb_classes = 6 , mask = False , 
-                      contrast = - 5 , blockSize = 53 , blurFact = 15 ,seuil = 210 ,
-                       thresh_active = True , index = False ,thresh = 0.5,focus = "bird_prob",
-                       diff_mod3C = "light" ,diff_mod4C = "HSV"):
+def Evaluate_extraction ( Images , name_test , name_ref ,data_path ,objects_targeted_, 
+                      contrast = - 5 , blockSize = 53 , blurFact = 15 , 
+                       diff_mod3C = "light",seuil = 210 ,mask = False ):
                         
     
 
     #Parameters
     #Dictionnary to convert string labels to num labels
-    objects_targeted_=["corneille","pigeon","faisan","oiseau","pie","incertain"]
+
     
     #Opening images
     image_ref=data_path+name_ref
     image_test=data_path+name_test
     imageA=cv2.imread(image_ref)
     imageB=cv2.imread(image_test)
-    Objects_Images=Images[Images["filename"].isin(objects_targeted_)]
+    Objects_Images=Images[Images["classe"].isin(objects_targeted_)]
     Images_target=Objects_Images[Objects_Images["filename"]==name_test]
     Images_target=Images_target.drop('filename',axis=1)
     
@@ -149,19 +146,10 @@ def Evaluate_extraction ( Images , name_test , name_ref  , CNNmodel , maxAnalDL 
     if  tiny_images :
         #reshape tiny_images in a shape adapted to Lenet and save localization in table_non_filtre
         batchImages_stack_reshape,generate_square=batched_cnts(tiny_images,imageB)
-
-
         if len(generate_square)!=0:
-            batchImages_stack_reshapes,generate_square=dim_filter(batchImages_stack_reshape,generate_square,tiny_images,maxAnalDL=maxAnalDL)#filter height width
-    
-        
-            
-    
             #We classify the generated tiny images according to the annotated coordinates. If this corresponds to an area with a bird it could be a false positive or a true positive
-            an_caught,NB_OBJECTS_TO_CAUGHT=class_tiny_images_caught_bis(generate_square, Images_target) 
-        
-  
-  
+            an_caught,NB_OBJECTS_TO_CAUGHT=count_extractions(generate_square, Images_target) 
+
     return an_caught,NB_OBJECTS_TO_CAUGHT
 
 
@@ -754,7 +742,7 @@ def class_tiny_images_caught(generate_square,
 
 
 #When a tiny image is caught in the area of an annotation assigned it to a list corresponding in its category label
-def class_tiny_images_caught_bis(generate_square,
+def count_extractions(generate_square,
                         Images_target,precise=False):
     
     
