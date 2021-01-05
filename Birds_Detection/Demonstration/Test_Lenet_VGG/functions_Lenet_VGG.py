@@ -13,7 +13,7 @@ import pandas as pd
 import numpy as np
 from numpy import load
 from imutils import grab_contours
-from skimage.measure import compare_ssim
+#from skimage.measure import compare_ssim
 import math
 from keras.applications import VGG16
 import joblib
@@ -22,6 +22,7 @@ import joblib
 #Load models
 Mat_path="../../Materiels/"
 Mod_path=Mat_path+"Models/"
+filtre_name=Mod_path+"RL_annotation_model"
 #Model1 = joblib.load(Mod_path+"model.cpickle")
 filtre_RL = joblib.load(filtre_name)
 #coef_filtre=pd.read_csv(Mod_path+"coefs_filtre_RQ.csv")
@@ -108,6 +109,60 @@ def Evaluate_Lenet_prediction ( Images , name_test , name_ref  , CNNmodel , maxA
     return imageA,imageB,tiny_images,batchImages_stack_reshape,generate_square,TP_birds,FP,TP_estimates,FP_estimates,liste_Diff_birds,nb_oiseaux
 
 
+
+
+
+
+#Prediction
+def Evaluate_extraction ( Images , name_test , name_ref  , CNNmodel , maxAnalDL ,data_path , 
+                       filtre_choice = "No_filtre" ,down_thresh = 25 ,
+                      chanels = 3 , numb_classes = 6 , mask = False , 
+                      contrast = - 5 , blockSize = 53 , blurFact = 15 ,seuil = 210 ,
+                       thresh_active = True , index = False ,thresh = 0.5,focus = "bird_prob",
+                       diff_mod3C = "light" ,diff_mod4C = "HSV"):
+                        
+    
+
+    #Parameters
+    #Dictionnary to convert string labels to num labels
+    objects_targeted_=["corneille","pigeon","faisan","oiseau","pie","incertain"]
+    
+    #Opening images
+    image_ref=data_path+name_ref
+    image_test=data_path+name_test
+    imageA=cv2.imread(image_ref)
+    imageB=cv2.imread(image_test)
+    Objects_Images=Images[Images["filename"].isin(objects_targeted_)]
+    Images_target=Objects_Images[Objects_Images["filename"]==name_test]
+    Images_target=Images_target.drop('filename',axis=1)
+    
+    #Set Mask    
+    if mask==True:
+        imageA=set_mask(imageA,folder="mask_path_to_fill",number_chanels=3)
+        imageB=set_mask(imageA,folder="mask_path_to_fill",number_chanels=3)
+        imageB=imageB.astype(np.uint8)
+        imageA=imageA.astype(np.uint8)
+       
+    #differentiate between images and extract tiny images in areas of greatest difference
+    tiny_images=diff_images(imageA,imageB,contrast=contrast,blockSize=blockSize,blurFact = blurFact,diff_mod3C=diff_mod3C,seuil=seuil)
+
+    if  tiny_images :
+        #reshape tiny_images in a shape adapted to Lenet and save localization in table_non_filtre
+        batchImages_stack_reshape,generate_square=batched_cnts(tiny_images,imageB)
+
+
+        if len(generate_square)!=0:
+            batchImages_stack_reshapes,generate_square=dim_filter(batchImages_stack_reshape,generate_square,tiny_images,maxAnalDL=maxAnalDL)#filter height width
+    
+        
+            
+    
+            #We classify the generated tiny images according to the annotated coordinates. If this corresponds to an area with a bird it could be a false positive or a true positive
+            an_caught,NB_OBJECTS_TO_CAUGHT=class_tiny_images_caught_bis(generate_square, Images_target) 
+        
+  
+  
+    return an_caught,NB_OBJECTS_TO_CAUGHT
 
 
 
@@ -685,7 +740,7 @@ def class_tiny_images_caught(generate_square,
     birds_to_find=len(birds_table)
     birds_defined_match=len(liste_DIFF_birds_defined)
     print("nombre d'oiseaux dans l'image",birds_to_find)
-    print("nombre d'oiseaux repérés parmi les oiseaux lab�lis�s",birds_defined_match )
+    print("nombre d'oiseaux repérés parmi les oiseaux labelises",birds_defined_match )
     
     if precise==False:
         
@@ -695,6 +750,60 @@ def class_tiny_images_caught(generate_square,
     if precise==True:
         return (liste_Diff_animals,dict_anotation_index_to_classe,liste_DIFF_birds_defined,liste_DIFF_birds_undefined,birds_defined_match,
     liste_DIFF_corbeau,liste_DIFF_faisan,liste_DIFF_pigeon,liste_DIFF_lapin,liste_DIFF_chevreuil)
+
+
+
+#When a tiny image is caught in the area of an annotation assigned it to a list corresponding in its category label
+def class_tiny_images_caught_bis(generate_square,
+                        Images_target,precise=False):
+    
+    
+    
+    an_caught=0
+    NB_OBJECTS_TO_CAUGHT=len(Images_target)
+    
+    #set area of gen squares
+    xmin_gen,xmax_gen,ymin_gen,ymax_gen=get_table_coord(generate_square)
+    ln_square_gen=len(generate_square)
+    generate_square["num_index"]=list(generate_square.index)
+    generate_square["area"]=area_square(xmin_gen,xmax_gen,ymin_gen,ymax_gen)
+    
+    
+    #get max intersection with square generate for each sqaure annotate
+    for num_im in range(NB_OBJECTS_TO_CAUGHT):
+        
+        x_min_anote,x_max_anote,y_min_anote,y_max_anote=get_table_coord(Images_target.iloc[num_im])
+        surface_anote=area_square(x_min_anote,x_max_anote,y_min_anote,y_max_anote)
+        
+        
+        #Replicated the coordinates of annotations the number time of the len  to be able to apply area_intersection function
+        zip_xmin_anote=[x_min_anote]*ln_square_gen
+        zip_xmax_anote=[x_max_anote]*ln_square_gen
+        zip_ymin_anote=[y_min_anote]*ln_square_gen
+        zip_ymax_anote=[y_max_anote]*ln_square_gen
+        
+        
+        #Select the im generated with th maximum area in commun but not too big
+        gen_square_size_filtered=generate_square[(generate_square["area"]<5*surface_anote) & (generate_square["area"]>0.5*surface_anote) ]
+        xmin_gen,xmax_gen,ymin_gen,ymax_gen=get_table_coord(gen_square_size_filtered) 
+        medium_squares=gen_square_size_filtered.copy()
+        liste_intersection=[area_intersection(a,b,c,d,e,f,g,h) for a,b,c,d,e,f,g,h in zip 
+                            (xmin_gen,xmax_gen,ymin_gen,ymax_gen, zip_xmin_anote,zip_xmax_anote,zip_ymin_anote,zip_ymax_anote ) ]
+        
+        medium_squares.loc[:,"area_intersection"]=liste_intersection
+        #medium_squares=medium_squares.reset_index()
+        
+        
+        
+        
+        medium_squares=medium_squares[medium_squares["area_intersection"]>0.5*surface_anote]
+        if len(medium_squares)!=0:
+            an_caught+=1
+            
+
+    
+    return  an_caught,NB_OBJECTS_TO_CAUGHT
+
 
 
 #After class_tiny_images_caught rearrange tiny image caught in fewer categories

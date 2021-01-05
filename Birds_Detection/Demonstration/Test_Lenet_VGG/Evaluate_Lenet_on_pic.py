@@ -9,7 +9,6 @@ Created on Mon Sep 21 16:18:33 2020
 
 
 import pandas as pd
-import functions_Lenet_VGG_work as fn
 import os
 from os.path import basename, join
 
@@ -19,7 +18,7 @@ import time
 from tensorflow.keras.models import load_model
 import pickle
 
-import functions_Lenet_VGG_work_in_progress as fn
+import functions_Lenet_VGG as fn
 #from os import chdir
 
 
@@ -57,8 +56,8 @@ images_.sort()
 
 #loop apply in a range of pic and in a range of pictures to evaluate the number of True Positif and False Positf and save results in list
 for parameter in liste_parameter:
-    focus,method,blockSize,maxAnalDL=parameter
-    base_name=focus+"-"+method+"-"+str(blockSize)+"-"+str(maxAnalDL)+".txt"
+    focus,diff_mod3C,blockSize,maxAnalDL=parameter
+    base_name=focus+"-"+diff_mod3C+"-"+str(blockSize)+"-"+str(maxAnalDL)+".txt"
     nb_FP_liste=[]
     nb_TP_liste=[]
     
@@ -68,14 +67,21 @@ for parameter in liste_parameter:
         index_of_ref=images_.index(name_test)-1
         name_ref=images_[index_of_ref]
         print(name_test,name_ref)
-        imageA,imageB,cnts,batchImages_stack_reshape,generate_square,TP_birds,FP,TP_estimates,FP_estimates,liste_Diff_birds,nb_oiseaux=fn.Evaluate_Lenet_prediction(name_test,name_ref,CNNmodel,data_path=data_path,
+        imageA,imageB,cnts,batchImages_stack_reshape,generate_square,TP_birds,FP,TP_estimates,FP_estimates,liste_Diff_birds,nb_oiseaux=fn.Evaluate_Lenet_prediction(Images, name_test,name_ref,CNNmodel,data_path=data_path,
                                                                                                                                                            blockSize=blockSize,thresh=0.5,
                                                                                                                                                            blurFact=17,chanels=3,contrast=-8,
-                                                                                                                                                           maxAnalDL=maxAnalDL,method=method,
+                                                                                                                                                           maxAnalDL=maxAnalDL,diff_mod3C=diff_mod3C,
                                                                                                                                                            mask=True,focus=focus)
                                                                                                                             
-                                                                                                                            
-               
+        """                                                                                                                   
+        imageA,imageB,cnts,batchImages_stack_reshape,generate_square,TP_birds,FP,TP_estimates,FP_estimates,liste_Diff_birds,nb_oiseaux=fn.Evaluate_Lenet_prediction ( Images , name_test , name_ref  , CNNmodel , maxAnalDL ,data_path , 
+                       filtre_choice = "No_filtre" ,down_thresh = 25 ,
+                      chanels = 3 , numb_classes = 6 , mask = False , 
+                      contrast = - 5 , blockSize = 53 , blurFact = 15 ,seuil = 210 ,
+                       thresh_active = True , index = False ,thresh = 0.5,focus = "bird_prob",
+                       diff_mod3C = "light" ,diff_mod4C = "HSV")       
+        
+        """
         nb_TP_birds=len(TP_birds)
         nb_FP=len(FP)
         nb_TP_thresh=len(TP_estimates)
