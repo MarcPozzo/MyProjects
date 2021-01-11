@@ -17,6 +17,11 @@ from imutils import grab_contours
 import math
 from keras.applications import VGG16
 import joblib
+import os
+from os.path import basename, join
+
+
+
 
 
 #Load models
@@ -31,6 +36,87 @@ filtre_RL = joblib.load(filtre_name)
 ######################################################################################################################################################
 
 ##Prediction/Evaluation
+numb_classes=6
+chanels=3
+contrast=-5
+blockSize=53
+blurFact=15
+seuil=210
+down_thresh = 25 
+filtre_choice = "No_filtre"
+#index sert pour le débuggage, si True, on voit le numéro de carré, si False la proba retournéé .. . 
+
+#Parameters to choose
+#Predictions of birds with Lenet (with 3 and 4 chanels inputs) and evaluation the number of false , true positif ... . A mask can be set
+def Evaluate_Lenet_prediction_bis ( Images , name_test , name_ref  , CNNmodel , data_path , 
+                       filtre_choice = filtre_choice ,down_thresh = down_thresh ,
+                      chanels = chanels , numb_classes = numb_classes , mask = False , 
+                      contrast = contrast , blockSize = blockSize , blurFact = blurFact ,seuil = seuil ,
+                       thresh_active = True , index = False ,thresh = 0.5,
+                       diff_mod3C = "light" ,diff_mod4C = "HSV"):
+                        
+    
+
+ 
+    #Opening images
+    image_ref=data_path+name_ref
+    image_test=data_path+name_test
+    imageA=cv2.imread(image_ref)
+    imageB=cv2.imread(image_test)
+    Images_target=Images[Images["filename"]==name_test]
+    Images_target=Images_target.drop('filename',axis=1)
+    nb_oiseaux=len( Images_target)
+    print("Birds in the picture: ",nb_oiseaux)
+    
+    #Set Mask    
+    if mask==True:
+        imageA=set_mask(imageA,folder="mask_path_to_fill",number_chanels=3)
+        imageB=set_mask(imageA,folder="mask_path_to_fill",number_chanels=3)
+        imageB=imageB.astype(np.uint8)
+        imageA=imageA.astype(np.uint8)
+       
+    #differentiate between images and extract tiny images in areas of greatest difference
+    tiny_images=diff_images(imageA,imageB,contrast=contrast,blockSize=blockSize,blurFact = blurFact,diff_mod3C=diff_mod3C,seuil=seuil)
+
+    if  tiny_images :
+        #reshape tiny_images in a shape adapted to Lenet and save localization in table_non_filtre
+        batchImages_stack_reshape,table_non_filtre=batched_cnts(tiny_images,imageB)
+        generate_square,batchImages_stack_reshape=filter_by_area(table_non_filtre,filtre_choice,batchImages_stack_reshape,down_thresh) #filters   
+        #Add a 4th chanel (differention with the previous image)
+        if chanels==4:
+            Diff=diff_image4C(imageA,imageB,diff_mod4C=diff_mod4C)
+            batchImages_stack_reshape=get_4C_all_batch(batchImages_stack_reshape,Diff,table_non_filtre)
+    
+        #We classify the generated tiny images according to the annotated coordinates. If this corresponds to an area with a bird it could be a false positive or a true positive
+        Images_target_nv=class_bis(generate_square, Images_target) 
+     
+        
+    else:
+        batchImages_stack_reshape=[]
+        generate_square=[]
+    #Estimations established and classed
+    TP=0
+    FP=0
+    if batchImages_stack_reshape:
+        estimates = CNNmodel.predict(np.array(batchImages_stack_reshape))
+        predictions=list(estimates.argmax(axis=1))
+
+        
+        for i in Images_target_nv["nv_index"]:
+            if predictions[i]== int(Images_target_nv["nv_class"][Images_target_nv["nv_index"]==i]):
+                TP+=1
+                
+                FP=len(predictions)   -predictions.count(0)  -len(Images_target_nv)  
+      
+        
+  
+    return TP,FP
+
+
+
+
+
+
 
 
 
@@ -148,9 +234,9 @@ def Evaluate_extraction ( Images , name_test , name_ref ,data_path ,objects_targ
         batchImages_stack_reshape,generate_square=batched_cnts(tiny_images,imageB)
         if len(generate_square)!=0:
             #We classify the generated tiny images according to the annotated coordinates. If this corresponds to an area with a bird it could be a false positive or a true positive
-            an_caught,NB_OBJECTS_TO_CAUGHT=count_extractions(generate_square, Images_target) 
+            an_caught,NB_OBJECTS_TO_CAUGHT,TINY_IMAGES_GENERATED=count_extractions(generate_square, Images_target) 
 
-    return an_caught,NB_OBJECTS_TO_CAUGHT
+    return an_caught,NB_OBJECTS_TO_CAUGHT,TINY_IMAGES_GENERATED
 
 
 
@@ -741,7 +827,100 @@ def class_tiny_images_caught(generate_square,
 
 
 
+
+
+
 #When a tiny image is caught in the area of an annotation assigned it to a list corresponding in its category label
+def class_bis(generate_square,
+                        Images_target,precise=False):
+    
+    dic_indices=np.load("/Users/marcpozzo/Documents/Projet_Git/Projet_Git/Birds_Detection/Materiels/dic_labels_indices.npy",allow_pickle='TRUE').item()
+    #ici on a un dic un peu different donc on va le redefinir ... . 
+    
+    
+    #Initialize empty list and dictionnary
+    liste_DIFF_birds_defined,liste_DIFF_birds_undefined,liste_DIFF_other_animals,liste_DIFF_faisan,liste_DIFF_corbeau,liste_DIFF_pigeon,liste_DIFF_lapin,liste_DIFF_chevreuil=([] for i in range(8))
+    dict_anotation_index_to_classe={}
+    dict_anotation_index_to_classe={'chevreuil': 1,
+     'corneille': 2,
+     'faisan': 3,
+     'ground': 0,
+     'lapin': 4,
+     'pigeon': 5}
+    
+    map_classes={"faisan":liste_DIFF_faisan, "corneille" : liste_DIFF_corbeau,"pigeon":liste_DIFF_pigeon,
+                 "lapin" :liste_DIFF_lapin, "chevreuil" :liste_DIFF_chevreuil, "oiseau" : liste_DIFF_birds_undefined,
+                 "incertain": liste_DIFF_birds_undefined, "pie":liste_DIFF_birds_undefined }
+    
+    
+    
+    birds_liste=["corneille","pigeon","faisan","oiseau","pie","incertain"]
+    nb_imagettes=len(Images_target)
+    
+    #initialisation du nv tableau
+    Images_target_nv=Images_target.copy()
+    Images_target_nv["nv_index"]=0
+    Images_target_nv["nv_class"]=0
+    
+    #set are of gen squares
+    xmin_gen,xmax_gen,ymin_gen,ymax_gen=get_table_coord(generate_square)
+    ln_square_gen=len(generate_square)
+    generate_square["num_index"]=list(generate_square.index)
+    generate_square["area"]=area_square(xmin_gen,xmax_gen,ymin_gen,ymax_gen)
+    
+    
+    #get max intersection with square generate for each sqaure annotate
+    for num_im in range(nb_imagettes):
+        
+        classe=Images_target["classe"].iloc[num_im]
+        x_min_anote,x_max_anote,y_min_anote,y_max_anote=get_table_coord(Images_target.iloc[num_im])
+        surface_anote=area_square(x_min_anote,x_max_anote,y_min_anote,y_max_anote)
+        
+        
+        #Replicated the coordinates of annotations the number time of the len  to be able to apply area_intersection function
+        zip_xmin_anote=[x_min_anote]*ln_square_gen
+        zip_xmax_anote=[x_max_anote]*ln_square_gen
+        zip_ymin_anote=[y_min_anote]*ln_square_gen
+        zip_ymax_anote=[y_max_anote]*ln_square_gen
+        
+        
+        #Select the im generated with th maximum area in commun but not too big
+        gen_square_size_filtered=generate_square[(generate_square["area"]<5*surface_anote) & (generate_square["area"]>0.5*surface_anote) ]
+        xmin_gen,xmax_gen,ymin_gen,ymax_gen=get_table_coord(gen_square_size_filtered) 
+        medium_squares=gen_square_size_filtered.copy()
+        liste_intersection=[area_intersection(a,b,c,d,e,f,g,h) for a,b,c,d,e,f,g,h in zip 
+                            (xmin_gen,xmax_gen,ymin_gen,ymax_gen, zip_xmin_anote,zip_xmax_anote,zip_ymin_anote,zip_ymax_anote ) ]
+        
+        medium_squares.loc[:,"area_intersection"]=liste_intersection
+
+        
+        
+        
+        
+        medium_squares=medium_squares[medium_squares["area_intersection"]>0.5*surface_anote]
+        if len(medium_squares)!=0:
+            max_squares=medium_squares[medium_squares["area_intersection"]==max(medium_squares["area_intersection"])]
+            index_max_intersection=int(max_squares["num_index"][max_squares["area"]==min(max_squares["area"])])
+            Images_target_nv["nv_index"].iloc[num_im]=index_max_intersection
+            Images_target_nv["nv_class"].iloc[num_im]=dict_anotation_index_to_classe[Images_target_nv["classe"].iloc[num_im]]
+            
+            
+            
+            
+
+    
+    if precise==False:
+        
+        return Images_target_nv
+    
+    if precise==True:
+        return Images_target_nv
+
+
+
+
+
+#Count the number of objects inside the images, the images extracted, the difference generated. 
 def count_extractions(generate_square,
                         Images_target,precise=False):
     
@@ -790,7 +969,7 @@ def count_extractions(generate_square,
             
 
     
-    return  an_caught,NB_OBJECTS_TO_CAUGHT
+    return  an_caught,NB_OBJECTS_TO_CAUGHT,ln_square_gen
 
 
 
@@ -1009,3 +1188,15 @@ def set_mask(imageB,folder,number_chanels=3):
     imageB=ImageMaksed.astype(int)
     
     return imageB
+
+
+
+#order images names by time of shoot. Images should be ordered to compare the differences appear for all each couple of images compared.
+def order_images(data_path):
+    images_=[]
+    for r, d, f in os.walk(data_path):
+        for file in f:
+            if '.jpg' in file:
+                images_.append(basename(join(r, file)))  
+    images_.sort()                   
+    return images_   
