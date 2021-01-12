@@ -48,11 +48,11 @@ filtre_choice = "No_filtre"
 
 #Parameters to choose
 #Predictions of birds with Lenet (with 3 and 4 chanels inputs) and evaluation the number of false , true positif ... . A mask can be set
-def Evaluate_Lenet_prediction_bis ( Images , name_test , name_ref  , CNNmodel , data_path , 
+def Evaluate_Lenet_prediction_bis ( Images , name_test , name_ref  , CNNmodel , data_path ,dict_anotation_index_to_classe, 
+                                   contrast , blockSize  , blurFact  ,seuil=210  ,
                        filtre_choice = filtre_choice ,down_thresh = down_thresh ,
                       chanels = chanels , numb_classes = numb_classes , mask = False , 
-                      contrast = contrast , blockSize = blockSize , blurFact = blurFact ,seuil = seuil ,
-                       thresh_active = True , index = False ,thresh = 0.5,
+                        thresh = 0.5,
                        diff_mod3C = "light" ,diff_mod4C = "HSV"):
                         
     
@@ -88,15 +88,14 @@ def Evaluate_Lenet_prediction_bis ( Images , name_test , name_ref  , CNNmodel , 
             batchImages_stack_reshape=get_4C_all_batch(batchImages_stack_reshape,Diff,table_non_filtre)
     
         #We classify the generated tiny images according to the annotated coordinates. If this corresponds to an area with a bird it could be a false positive or a true positive
-        Images_target_nv=class_bis(generate_square, Images_target) 
+        Images_target_nv=class_bis(generate_square, Images_target,dict_anotation_index_to_classe) 
      
         
     else:
         batchImages_stack_reshape=[]
         generate_square=[]
     #Estimations established and classed
-    TP=0
-    FP=0
+    (TP,FP)=(0,0)
     if batchImages_stack_reshape:
         estimates = CNNmodel.predict(np.array(batchImages_stack_reshape))
         predictions=list(estimates.argmax(axis=1))
@@ -831,36 +830,15 @@ def class_tiny_images_caught(generate_square,
 
 
 #When a tiny image is caught in the area of an annotation assigned it to a list corresponding in its category label
-def class_bis(generate_square,
-                        Images_target,precise=False):
-    
-    dic_indices=np.load("/Users/marcpozzo/Documents/Projet_Git/Projet_Git/Birds_Detection/Materiels/dic_labels_indices.npy",allow_pickle='TRUE').item()
-    #ici on a un dic un peu different donc on va le redefinir ... . 
+def class_bis(generate_square,Images_target,dict_anotation_index_to_classe,precise=False):
     
     
-    #Initialize empty list and dictionnary
-    liste_DIFF_birds_defined,liste_DIFF_birds_undefined,liste_DIFF_other_animals,liste_DIFF_faisan,liste_DIFF_corbeau,liste_DIFF_pigeon,liste_DIFF_lapin,liste_DIFF_chevreuil=([] for i in range(8))
-    dict_anotation_index_to_classe={}
-    dict_anotation_index_to_classe={'chevreuil': 1,
-     'corneille': 2,
-     'faisan': 3,
-     'ground': 0,
-     'lapin': 4,
-     'pigeon': 5}
-    
-    map_classes={"faisan":liste_DIFF_faisan, "corneille" : liste_DIFF_corbeau,"pigeon":liste_DIFF_pigeon,
-                 "lapin" :liste_DIFF_lapin, "chevreuil" :liste_DIFF_chevreuil, "oiseau" : liste_DIFF_birds_undefined,
-                 "incertain": liste_DIFF_birds_undefined, "pie":liste_DIFF_birds_undefined }
-    
-    
-    
-    birds_liste=["corneille","pigeon","faisan","oiseau","pie","incertain"]
-    nb_imagettes=len(Images_target)
     
     #initialisation du nv tableau
     Images_target_nv=Images_target.copy()
     Images_target_nv["nv_index"]=0
     Images_target_nv["nv_class"]=0
+    nb_imagettes=len(Images_target)
     
     #set are of gen squares
     xmin_gen,xmax_gen,ymin_gen,ymax_gen=get_table_coord(generate_square)
@@ -872,7 +850,6 @@ def class_bis(generate_square,
     #get max intersection with square generate for each sqaure annotate
     for num_im in range(nb_imagettes):
         
-        classe=Images_target["classe"].iloc[num_im]
         x_min_anote,x_max_anote,y_min_anote,y_max_anote=get_table_coord(Images_target.iloc[num_im])
         surface_anote=area_square(x_min_anote,x_max_anote,y_min_anote,y_max_anote)
         
@@ -888,10 +865,9 @@ def class_bis(generate_square,
         gen_square_size_filtered=generate_square[(generate_square["area"]<5*surface_anote) & (generate_square["area"]>0.5*surface_anote) ]
         xmin_gen,xmax_gen,ymin_gen,ymax_gen=get_table_coord(gen_square_size_filtered) 
         medium_squares=gen_square_size_filtered.copy()
-        liste_intersection=[area_intersection(a,b,c,d,e,f,g,h) for a,b,c,d,e,f,g,h in zip 
+        intersections_=[area_intersection(a,b,c,d,e,f,g,h) for a,b,c,d,e,f,g,h in zip 
                             (xmin_gen,xmax_gen,ymin_gen,ymax_gen, zip_xmin_anote,zip_xmax_anote,zip_ymin_anote,zip_ymax_anote ) ]
-        
-        medium_squares.loc[:,"area_intersection"]=liste_intersection
+        medium_squares.loc[:,"area_intersection"]=intersections_
 
         
         
