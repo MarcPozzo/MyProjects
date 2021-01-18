@@ -48,7 +48,7 @@ filtre_choice = "No_filtre"
 
 #Parameters to choose
 #Predictions of birds with Lenet (with 3 and 4 chanels inputs) and evaluation the number of false , true positif ... . A mask can be set
-def Evaluate_Lenet_prediction_bis ( Images , name_test , name_ref  , CNNmodel , data_path ,dict_anotation_index_to_classe, defaults_indices_,
+def Evaluate_Lenet_prediction_bis ( Images , name_test , name_ref  , CNNmodel , data_path ,dict_anotation_index_to_classe, ntarget_classes_,
                                    contrast , blockSize  , blurFact  ,seuil=210  ,
                        filtre_choice = filtre_choice ,down_thresh = down_thresh ,
                       chanels = chanels , mask = False , 
@@ -88,8 +88,7 @@ def Evaluate_Lenet_prediction_bis ( Images , name_test , name_ref  , CNNmodel , 
             batchImages_stack_reshape=get_4C_all_batch(batchImages_stack_reshape,Diff,table_non_filtre)
     
         #We classify the generated tiny images according to the annotated coordinates. If this corresponds to an area with a bird it could be a false positive or a true positive
-        Images_target_nv=class_bis(generate_square, Images_target,dict_anotation_index_to_classe) 
-     
+        Map_Target_Indexes=class_bis(generate_square, Images_target,dict_anotation_index_to_classe) 
         #Ici par exemple on pourrait retourner les non targets, c'est à dire la liste de ceux qui sont dans la table en renvoyant leur numéro 
         
         
@@ -102,30 +101,30 @@ def Evaluate_Lenet_prediction_bis ( Images , name_test , name_ref  , CNNmodel , 
         estimates = CNNmodel.predict(np.array(batchImages_stack_reshape))
         predictions=list(estimates.argmax(axis=1))
         NB_ESTIMATES=len(estimates)
-        indexes_targets_=list(Images_target_nv["nv_index"])
+        indexes_targets_=list(Map_Target_Indexes["nv_index"])
         
+        #Cout the TP
         for i in indexes_targets_:
             if precise==True:
-                if predictions[i]== int(Images_target_nv["nv_class"][Images_target_nv["nv_index"]==i]):
+                if predictions[i]== int(Map_Target_Indexes["nv_class"][Map_Target_Indexes["nv_index"]==i]):
                     TP+=1      
             elif precise==False:
-                ESTIMATES_DEFAULTS_OBJECTS=sum(estimates[i][classe_defaut] for classe_defaut in defaults_indices_)
+                ESTIMATES_DEFAULTS_OBJECTS=sum(estimates[i][classe_defaut] for classe_defaut in ntarget_classes_)
                 ESTIMATES_TARGETS=1-ESTIMATES_DEFAULTS_OBJECTS
                 if ESTIMATES_TARGETS>thresh:
                     TP+=1
+        
+        #Cout the FP
         if precise==True:
             NB_DEFAULTS_LABELS_PREDICTIONS=0
-            for d_indice in defaults_indices_:
+            for d_indice in ntarget_classes_:
                 NB_DEFAULTS_LABELS_PREDICTIONS+=predictions.count(d_indice)
-            FP=NB_ESTIMATES   -NB_DEFAULTS_LABELS_PREDICTIONS  -len(Images_target_nv) 
-        else:
-            defaults_indexes_s=set(range(NB_ESTIMATES))-set(indexes_targets_)
-            #def_rest_=[estimates[i] for i in defaults_indexes_s]
-            d_p_=[sum(estimates[i][classe_defaut] for classe_defaut in defaults_indices_) for i in defaults_indexes_s]
-            #defaults_indexes_=[i for i in set( list(range(len(estimates))) ) -set([558,559]) ] 
-            #defaults_indexes_=[i for i (in (range(len(estimates)))  & in ([558,559]) )  ]
-            FP=len([i for i in d_p_ if i<1-thresh])
-            FP=0
+            FP=NB_ESTIMATES   -NB_DEFAULTS_LABELS_PREDICTIONS  -len(Map_Target_Indexes) 
+        elif precise==False:
+            ntarget_indexes=set(range(NB_ESTIMATES))-set(indexes_targets_)
+            pred_sum_ntargets_=[sum(estimates[i][classe_defaut] for classe_defaut in ntarget_classes_) for i in ntarget_indexes]
+            FP=len([i for i in pred_sum_ntargets_ if i<1-thresh])
+        
             
                 
         
@@ -135,9 +134,7 @@ def Evaluate_Lenet_prediction_bis ( Images , name_test , name_ref  , CNNmodel , 
 
 
 
-r1 = range_list_to_tree([ (1, 1000), (1100, 1200) ])
-r2 = range_list_to_tree([ (30, 50), (60, 200), (1150, 1300) ])
-diff = merge(r1, r2, lambda a, b : a and not b)
+
 
 
 

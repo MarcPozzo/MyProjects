@@ -19,9 +19,11 @@ import numpy as np
 
 
 
-#Parameters to choose 
-neurone_name="Models/drop_out.50"
-parameters_=[("bird_large","light",25,50),("bird_large","light",25,-1),(17,-8,53,-1)] #Parameters of diff used in the loop
+#Parameters to choose (please refer you to the script Extraction_Evaluation.py to set blurFact,contrast,blockSize)
+blurFact=17
+contrast=-8
+blockSize=53
+neurone_name="Models/drop_out.50" #please refer you to ../train_Lenet/train_your_tiny_images.ipynb
 targets_=['corneille', 'faisan', 'pigeon']
 
 
@@ -34,12 +36,12 @@ CNNmodel  = load_model(neurone_feature,compile=False)
 Images=pd.read_csv(Mat_path+"images.csv")
 dict_anotation_index_to_classe=np.load(Mat_path+"dic_labels_indices.npy",allow_pickle='TRUE').item() 
 Images=Images[Images["classe"].isin( targets_ )]
-
+base_name="blurFact"+"_"+str(blurFact)+"_"+"contrast"+"_"+str(contrast)+"_"+"blockSize"+"_"+str(blockSize)+".csv"
 
 no_targets_=list( set(list(dict_anotation_index_to_classe.keys()))-set(targets_))
-defaults_indices_=[]
+ntarget_classes_=[]
 for el in no_targets_:
-    defaults_indices_.append(dict_anotation_index_to_classe[el])
+    ntarget_classes_.append(dict_anotation_index_to_classe[el])
 
 
 #Gather and sort the names of all picture (with and without bird ) in a list
@@ -47,29 +49,36 @@ images_birds_=list(Images["filename"].unique()) # only images containig birds
 images_=fn.order_images(data_path)
 
 
-
+thresholds_=[0.1,0.3,0.5,0.7,0.9]
 
 #loop apply in a range of pic and in a range of pictures to evaluate the number of True Positif and False Positf and save results in list
-for parameter in parameters_:    
-    blurFact,contrast,blockSize,maxAnalDL=parameter
-    base_name=str(blurFact)+"-"+str(contrast)+"-"+str(blockSize)+"-"+str(maxAnalDL)+".txt"
-    (NB_FP,NB_TP)=(0,0)
-    
+
+nb_FP_ds_=[]
+nb_TP_ds_=[]
+base_name="Lenet_Evaluation.csv"
+for thresh in thresholds_:    
+    NB_TP=0
+    NB_FP=0
     for name_test in images_birds_[:2]:                    
         index_of_ref=images_.index(name_test)-1
         name_ref=images_[index_of_ref]
         print(name_test,name_ref)
-        TP,FP=fn.Evaluate_Lenet_prediction_bis ( Images , name_test , name_ref  , CNNmodel ,data_path, dict_anotation_index_to_classe, defaults_indices_,contrast, blockSize, blurFact )  
+        TP,FP=fn.Evaluate_Lenet_prediction_bis ( Images , name_test , name_ref  , CNNmodel ,data_path, dict_anotation_index_to_classe, ntarget_classes_,contrast, blockSize, blurFact,thresh=thresh )  
         NB_TP+= TP
         NB_FP+=FP
+    nb_FP_ds_.append(NB_FP)
+    nb_TP_ds_.append(NB_TP)
+    print(NB_TP)
+    print(NB_FP)
+    
  
        
            
-    """            
-    with open(Mat_path+"FP-"+base_name, "wb") as fp:   #Pickling
+                
+with open("FP-"+base_name, "wb") as fp:   #Pickling
             pickle.dump(nb_FP_ds_, fp)
                     
-    with open(Mat_path+"TP-"+base_name, "wb") as fp:   #Pickling
+with open("TP-"+base_name, "wb") as fp:   #Pickling
             pickle.dump(nb_TP_ds_, fp)
-    """
+    
                 
