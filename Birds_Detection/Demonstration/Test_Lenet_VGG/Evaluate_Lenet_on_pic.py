@@ -24,7 +24,7 @@ blurFact=17
 contrast=-8
 blockSize=53
 neurone_name="Models/drop_out.50" #please refer you to ../train_Lenet/train_your_tiny_images.ipynb
-targets_=['corneille', 'faisan', 'pigeon']
+targets_=['corneille', 'faisan', 'pigeon']#Targets_ are gathered if Precise==Fase (default Value) in Evaluate_Lenet_prediction
 
 
 
@@ -49,7 +49,7 @@ images_birds_=list(Images["filename"].unique()) # only images containig birds
 images_=fn.order_images(data_path)
 
 
-thresholds_=[0.1,0.3,0.5,0.7,0.9]
+thresholds_=[0.1,0.3,0.5,0.7,0.9]#thresholds_ is the probability threshold above the object can be identified as the target
 
 #loop apply in a range of pic and in a range of pictures to evaluate the number of True Positif and False Positf and save results in list
 
@@ -63,13 +63,13 @@ for thresh in thresholds_:
         index_of_ref=images_.index(name_test)-1
         name_ref=images_[index_of_ref]
         print(name_test,name_ref)
-        TP,FP=fn.Evaluate_Lenet_prediction_bis ( Images , name_test , name_ref  , CNNmodel ,data_path, dict_anotation_index_to_classe, ntarget_classes_,contrast, blockSize, blurFact,thresh=thresh )  
+        TP,FP=fn.Evaluate_Lenet_prediction( Images , name_test , name_ref  , CNNmodel ,data_path, dict_anotation_index_to_classe, ntarget_classes_,contrast, blockSize, blurFact,thresh=thresh )  
         NB_TP+= TP
         NB_FP+=FP
     nb_FP_ds_.append(NB_FP)
     nb_TP_ds_.append(NB_TP)
-    print(NB_TP)
-    print(NB_FP)
+    print("For these parameters the total number of TP is: ",NB_TP)
+    print("For these parameters the total number of FP is: ",NB_FP)
     
  
        
